@@ -1,0 +1,150 @@
+/* ==========================================================================
+   /about — the story unit.
+
+   Two layouts, both designed, chosen in the JSX rather than here:
+     · no photos  → .about__solo   one centred column at the wide measure
+     · photos     → .about__layout prose column + photo column
+   There is no rule in this file that hides an empty photo column, because an
+   empty photo column is never rendered.
+   ========================================================================== */
+
+/* The nav is fixed and this is the first unit on the page, so the unit carries
+   its own clearance instead of the layout guessing at one. */
+.about {
+  padding-top: calc(var(--u2) + var(--u-half));
+}
+
+@media (min-width: 880px) {
+  .about {
+    padding-top: calc(var(--u2) + var(--u));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Readout — EST. 2016 · 009 RELEASES
+   Sits in the section head's aside slot: mono, tracked out, values brighter
+   than their labels so it scans like a channel strip.
+   -------------------------------------------------------------------------- */
+
+.about__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.about__meta-v {
+  color: var(--tape);
+}
+
+/* Decorative only — the parts either side carry the meaning. */
+.about__meta-sep {
+  color: var(--score);
+}
+
+/* --------------------------------------------------------------------------
+   No photos — one column.
+
+   The measure comes from .prose--story itself, and the hairline is drawn on
+   that same block so it spans exactly the text and not a pixel more. A rule
+   the width of the column is what makes a centred column read as a decision.
+   -------------------------------------------------------------------------- */
+
+.about__solo > .prose,
+.about__note {
+  margin-inline: auto;
+}
+
+/* A pasted URL in the client's own text must not push the column wider than
+   its track. */
+.about .prose {
+  overflow-wrap: break-word;
+}
+
+.about__solo > .prose {
+  border-top: var(--hair) solid var(--score);
+  padding-top: var(--u-half);
+}
+
+/* The unwritten-story state. Narrower than the prose measure so the dashed
+   frame reads as a note, not as the page. */
+.about__note {
+  max-width: 56ch;
+}
+
+/* --------------------------------------------------------------------------
+   With photos — prose column, photo column.
+   -------------------------------------------------------------------------- */
+
+.about__layout {
+  display: grid;
+  gap: var(--u);
+  border-top: var(--hair) solid var(--score);
+  padding-top: var(--u-half);
+}
+
+/* Grid items default to min-width: auto, which would let either column push
+   past its track rather than wrap. */
+.about__prose,
+.about__photos {
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .about__layout {
+    /* The prose keeps its own max-width, so this ratio only decides how much
+       room the photos get — never how wide the text runs. */
+    grid-template-columns: minmax(0, 1.55fr) minmax(230px, 1fr);
+    gap: clamp(var(--u-half), 4vw, var(--u2));
+    align-items: start;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Photos
+   -------------------------------------------------------------------------- */
+
+.about__photos {
+  display: grid;
+  gap: var(--u);
+}
+
+/* Below the two-column breakpoint the column becomes a contact sheet under the
+   prose rather than a single tall stack of full-width photos. */
+@media (min-width: 560px) and (max-width: 899px) {
+  .about__photos--column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap);
+  }
+}
+
+.about__photos--row {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--u-half) var(--gap);
+  border-top: var(--hair) solid var(--score);
+  padding-top: var(--u-half);
+}
+
+/* The frame is a hairline and nothing else — no lift, no crop. The shape of
+   the photo is the photographer's, not the grid's. */
+.about__photo .about__photo-img {
+  width: 100%;
+  height: auto;
+  border: var(--hair) solid var(--score);
+}
+
+.about__caption {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--dust);
+}
+
+.about__caption-n {
+  flex: none;
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+}

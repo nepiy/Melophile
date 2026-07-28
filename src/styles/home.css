@@ -1,0 +1,113 @@
+/* ==========================================================================
+   Home sections 2–4.
+
+   The release card and the contact detail block used to live here, which was a
+   bug: both are rendered by components shared with /music, /artists and
+   /contact, but a page-level stylesheet is only loaded by the page that imports
+   it — so the card arrived unstyled everywhere except the home page. They now
+   live in chrome.css with the rest of the shared furniture.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Section 2 — music grid. Four across, and the art is allowed to be big.
+   -------------------------------------------------------------------------- */
+
+.home-music {
+  display: grid;
+  gap: var(--gap) var(--gap);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 560px) {
+  .home-music {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .home-music {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* 5–8 featured entries wrap to a second row rather than shrinking the art. */
+  .home-music[data-count='5'],
+  .home-music[data-count='6'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Section 3 — services. Hairline-divided cells, not cards.
+   -------------------------------------------------------------------------- */
+
+.svc {
+  display: grid;
+  grid-template-columns: 1fr;
+  /* One hairline drawn once as the container border, then per-cell borders on
+     two edges only — so the grid reads as an engraved panel with no doubling. */
+  border-top: var(--hair) solid var(--score);
+  border-left: var(--hair) solid var(--score);
+}
+
+.svc__item {
+  padding: var(--u-half) var(--gap);
+  border-right: var(--hair) solid var(--score);
+  border-bottom: var(--hair) solid var(--score);
+  min-height: calc(var(--u) * 2.6);
+}
+
+@media (min-width: 620px) {
+  .svc {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 980px) {
+  .svc {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.svc__title {
+  margin-top: 18px;
+  font-size: var(--fs-h3);
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+  color: var(--tape);
+}
+
+.svc__line {
+  max-width: 34ch;
+  margin-top: 8px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Section 4 — contact. Reads the same row as /contact.
+   -------------------------------------------------------------------------- */
+
+.home-contact {
+  display: grid;
+  gap: var(--u-half);
+  align-items: start;
+}
+
+@media (min-width: 880px) {
+  .home-contact {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--u2);
+  }
+}
+
+.home-contact__cta {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.home-contact__note {
+  color: var(--dust);
+  font-size: var(--fs-small);
+}

@@ -1,0 +1,323 @@
+/* ==========================================================================
+   /contact — the details plate and the request panel.
+
+   The form is the one place on the site with a lot of small controls in a row,
+   so it is where the rack idea has to hold hardest: every field is a hairline
+   box on --rack under a silkscreened mono label, every box is exactly the same
+   height, and nothing separates by lift. No shadows, no radii, one accent.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01 — details
+   -------------------------------------------------------------------------- */
+
+.ct-top {
+  display: grid;
+  gap: var(--u);
+}
+
+.ct-map {
+  display: grid;
+  gap: 12px;
+}
+
+.ct-map__frame {
+  position: relative;
+  /* Portrait-ish on a phone so the map is usable, a wide strip once there is
+     room — the same panel proportion the rest of the page works in. */
+  aspect-ratio: 4 / 3;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+@media (min-width: 720px) {
+  .ct-map__frame {
+    aspect-ratio: 21 / 8;
+  }
+}
+
+.ct-map__frame iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   02 — booking
+   -------------------------------------------------------------------------- */
+
+/* The nav is fixed, so an anchored jump has to stop short of it. */
+.ct-book {
+  scroll-margin-top: calc(var(--u) + var(--gap));
+}
+
+.bk {
+  display: grid;
+  gap: var(--u-half);
+  /* A form field wider than this is harder to read, not easier to fill. */
+  max-width: 940px;
+}
+
+.bk__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap) var(--u-half);
+}
+
+.bk__field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  /* Single column by default: at 360px nothing is halved and nothing is cropped. */
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 620px) {
+  .bk__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bk__field {
+    grid-column: span 1;
+  }
+
+  .bk__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Six columns is what lets name/email sit half-and-half above three thirds of
+   date, time and session type — the row grouping of a channel strip. */
+@media (min-width: 940px) {
+  .bk__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .bk__field {
+    grid-column: span 2;
+  }
+
+  .bk__field--half {
+    grid-column: span 3;
+  }
+
+  .bk__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.bk__label {
+  /* The label is the engraving above the socket, not a caption under it. */
+  color: var(--dust);
+}
+
+/* --------------------------------------------------------------------------
+   Controls. One height for every single-line box, whichever face is inside it,
+   so a row of fields reads as one machined edge.
+   -------------------------------------------------------------------------- */
+
+.bk__box {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 12px 14px;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-body);
+  font-variation-settings: var(--body-axes);
+  font-size: var(--fs-body);
+  line-height: 1.35;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.bk__box:hover {
+  border-color: color-mix(in srgb, var(--score) 52%, var(--dust));
+}
+
+.bk__box::placeholder {
+  color: color-mix(in srgb, var(--dust) 62%, var(--room));
+}
+
+/* Anything that is a date, a time, a count, an address or a link is data, and
+   data is set in the mono. Prose — a name, the notes — is not. */
+.bk__box--mono {
+  font-family: var(--face-mono);
+  font-variation-settings: normal;
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.bk__box--area {
+  min-height: calc(var(--u) * 2.8);
+  padding: 14px;
+  line-height: var(--lh-body);
+  resize: vertical;
+}
+
+/* The hairline is the only thing that changes. No fill, no glow, no lift. */
+.bk__box[aria-invalid='true'] {
+  border-color: var(--peak);
+}
+
+/* Native date and time inputs put their own picker glyph inside the box. */
+.bk__box::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.86);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--t-quick) var(--ease-gear);
+}
+
+.bk__box:hover::-webkit-calendar-picker-indicator,
+.bk__box:focus-visible::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* Select — the native arrow is replaced by a hairline chevron, because the
+   platform one is the only rounded, shaded thing that would be on the page. */
+.bk__sel {
+  position: relative;
+  display: block;
+}
+
+.bk__sel select {
+  appearance: none;
+  padding-right: 42px;
+  cursor: pointer;
+}
+
+.bk__sel::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 17px;
+  width: 7px;
+  height: 7px;
+  margin-top: -6px;
+  border-right: var(--hair) solid var(--dust);
+  border-bottom: var(--hair) solid var(--dust);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Messages
+   -------------------------------------------------------------------------- */
+
+/* A hint prevents an error, so it is worth the line. */
+.bk__hint {
+  color: var(--dust);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* --peak carries the hairline; --peak-lit carries the words. --peak is 3.98:1
+   and would fail as text, so it is never text. */
+.bk__err {
+  padding-left: 11px;
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.bk__alert {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--rack);
+  border: var(--hair) solid var(--peak);
+}
+
+.bk__alert-label {
+  color: var(--peak-lit);
+}
+
+.bk__alert-text {
+  max-width: 60ch;
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Submit
+   -------------------------------------------------------------------------- */
+
+.bk__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap);
+  padding-top: var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.bk__note {
+  max-width: 40ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Confirmation — replaces the form in place. The lit left edge is the only
+   thing on the page that says "this one is different".
+   -------------------------------------------------------------------------- */
+
+.bk-done {
+  display: grid;
+  gap: var(--u-half);
+  max-width: 620px;
+  padding: var(--u-half) var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--lamp);
+}
+
+.bk-done__lead {
+  display: grid;
+  gap: 12px;
+}
+
+.bk-done__mark {
+  color: var(--lamp);
+}
+
+.bk-done__title {
+  font-size: var(--fs-h3);
+  color: var(--tape);
+}
+
+.bk-done__text {
+  max-width: 46ch;
+  color: var(--tape);
+  font-size: var(--fs-body);
+}
+
+.bk-done__reply {
+  max-width: 46ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* A receipt of what was asked for, in the mono, because all of it is data. */
+.bk-done__recap {
+  display: grid;
+  border-top: var(--hair) solid var(--score);
+}
+
+.bk-done__row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--gap-sm);
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.bk-done__val {
+  color: var(--tape);
+  overflow-wrap: anywhere;
+}

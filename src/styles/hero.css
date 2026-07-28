@@ -1,0 +1,730 @@
+/* ==========================================================================
+   The hero. The one thing the site will be remembered by.
+
+   The contract with the JS: the rAF loop writes custom properties on .hero and
+   nothing else. Every rule below reads those properties and animates only
+   transform, opacity and filter. There is no layout in this file's motion.
+   ========================================================================== */
+
+/* Registered so the per-glyph maths below resolves to real numbers rather than
+   to text substitution, and so nothing is re-parsed every frame. */
+@property --i {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --d {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --ghost-gate {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --bloom {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --flash {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --chain {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --needle-deg {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: -46;
+}
+/* These four are written by the loop on .hero and consumed on .mark and
+   .mark__break, which are descendants — so they MUST inherit. Registered with
+   `inherits: false` they silently resolve to their initial value at the
+   consumer, which costs you the lock overshoot and all of the displacement
+   without any error anywhere. */
+@property --mark-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --mark-y {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --mark-scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+@property --break-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Set on the ghost element and read on that same element, so no inheritance
+   is needed — and not inheriting keeps each tap's value to itself. */
+@property --gx {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --ghost-base {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Static index, set inline on a chain stage or a ghost and read by their
+   children (the lamp, the link's ::after) — so this one inherits too. */
+@property --n {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  /* The split and the ghosts deliberately exceed the box. Cropping the effects
+     is fine; the wordmark itself is sized so it never needs to be. */
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Carries the same max-width and left inset as .shell and .nav__inner, so the
+   wordmark's first letter sits directly under the nav logo at any width. */
+.hero__inner {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--gap);
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  /* svh, so a mobile URL bar collapsing does not resize the hero mid-animation.
+     border-box means the padding is inside the viewport height, which is what
+     keeps the scroll cue on screen at 720px tall. */
+  min-height: 100svh;
+  padding: calc(var(--u) * 1.6) var(--pad-x) var(--u-half) var(--content-inset);
+}
+
+/* --------------------------------------------------------------------------
+   Instrumentation rows
+   -------------------------------------------------------------------------- */
+
+.hero__gear {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.hero__gear--bottom {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--gap-sm) var(--gap);
+}
+
+/* ---- signal chain ---- */
+
+.chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.chain__stage {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.chain__lamp {
+  width: 5px;
+  height: 5px;
+  background: var(--lamp);
+  /* Lit once the signal has reached this stage. --chain comes from the clock. */
+  opacity: clamp(0.14, calc(var(--chain) - var(--n)), 1);
+  transition: opacity var(--t-flick) linear;
+}
+
+.chain__name {
+  color: var(--dust);
+  font-size: 0.625rem;
+}
+
+.chain__link {
+  width: clamp(14px, 3vw, 34px);
+  height: var(--hair);
+  margin-inline: 9px;
+  background: var(--score);
+  position: relative;
+}
+
+/* The link fills by scaleX — a transform, so it costs nothing. */
+.chain__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--lamp);
+  transform: scaleX(clamp(0, calc(var(--chain) - var(--n)), 1));
+  transform-origin: left;
+}
+
+/* ---- VU meter ---- */
+
+.vu {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.vu__face {
+  width: clamp(96px, 12vw, 132px);
+  height: auto;
+  overflow: visible;
+}
+
+.vu__arc {
+  stroke: var(--score);
+  stroke-width: 1;
+}
+
+.vu__arc--over {
+  stroke: var(--peak);
+  opacity: 0.75;
+}
+
+.vu__tick {
+  stroke: color-mix(in srgb, var(--score) 40%, var(--dust));
+  stroke-width: 1;
+}
+
+.vu__tick--major {
+  stroke: var(--dust);
+}
+
+.vu__db,
+.vu__unit {
+  fill: var(--dust);
+  stroke: none;
+  font-family: var(--face-mono);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+}
+
+.vu__unit {
+  fill: color-mix(in srgb, var(--dust) 60%, var(--room));
+  font-size: 8px;
+  letter-spacing: 0.2em;
+}
+
+.vu__needle path {
+  stroke: var(--tape);
+  stroke-width: 1.2;
+}
+
+.vu__needle {
+  transform-box: view-box;
+  transform-origin: 60px 70px;
+  transform: rotate(calc(var(--needle-deg) * 1deg));
+}
+
+.vu__pivot {
+  fill: var(--dust);
+  stroke: none;
+}
+
+.vu__peak {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 6px;
+}
+
+.vu__peak-lamp {
+  width: 5px;
+  height: 5px;
+  background: var(--peak);
+  opacity: 0.16;
+  transition: opacity var(--t-flick) linear;
+}
+
+.hero[data-peak='true'] .vu__peak-lamp {
+  opacity: 1;
+}
+
+.vu__peak-label {
+  font-size: 0.5625rem;
+  color: color-mix(in srgb, var(--dust) 70%, var(--room));
+}
+
+/* --------------------------------------------------------------------------
+   The wordmark
+   -------------------------------------------------------------------------- */
+
+.hero__stage {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  min-width: 0;
+}
+
+.mark {
+  position: relative;
+  display: block;
+  /* One shared transform for displacement, overshoot and idle drift, so the
+     three never fight over the same channel. */
+  transform: translate3d(
+      calc((var(--mark-x, 0) + var(--drift-x, 0)) * 1px),
+      calc(var(--mark-y, 0) * 1px),
+      0
+    )
+    rotate(calc(var(--drift-r, 0) * 1deg)) scale(var(--mark-scale, 1));
+  transform-origin: left center;
+}
+
+.mark__line {
+  display: block;
+  font-family: var(--face-display);
+  font-variation-settings: var(--wordmark-axes);
+  font-size: var(--fs-wordmark);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-wordmark);
+  color: var(--tape);
+  white-space: nowrap;
+}
+
+.mark__char {
+  display: inline-block;
+}
+
+/* Effect layers stack exactly on top of the real text. */
+.mark__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The real, selectable text. aria-label on the h1 gives assistive tech the
+   whole name rather than sixteen letters. */
+.mark__solid {
+  position: relative;
+  margin: 0;
+}
+
+/* ---- the filter sweep, resolved per glyph, entirely in CSS ----
+   JS writes ONE value (--sweep). Each glyph carries a static --i and works out
+   its own blur, lift and opacity from the difference. That is why 16 letters
+   resolve left-to-right at the cost of a single style write per frame. */
+.mark__solid .mark__char {
+  --d: calc(var(--i) - var(--sweep));
+  filter: blur(clamp(0px, calc(var(--d) * 17px), 12px));
+  transform: translate3d(0, clamp(0px, calc(var(--d) * 22px), 15px), 0);
+  opacity: clamp(0.16, calc(1 - var(--d) * 0.9), 1);
+}
+
+/* Once the sweep has passed the last glyph, drop the per-glyph filters
+   altogether. Sixteen blur layers held open through a permanent idle loop is
+   exactly the sort of thing that quietly costs 20fps. */
+.hero[data-swept='true'] .mark__solid .mark__char {
+  filter: none;
+  transform: none;
+  opacity: 1;
+}
+
+/* ---- chromatic separation ----
+   Three real channel copies, screen-blended. At zero offset they recombine to
+   exactly --tape, which is why the cold fringing disappears at lock rather
+   than being faded out. */
+.mark__chan {
+  mix-blend-mode: screen;
+  filter: blur(calc(var(--split) * 1.4px));
+}
+
+.mark__chan .mark__line {
+  color: inherit;
+}
+
+.mark__chan--r {
+  color: var(--chan-r);
+  transform: translate3d(calc(var(--split) * 13px), calc(var(--split) * -2px), 0);
+}
+
+.mark__chan--g {
+  color: var(--chan-g);
+  transform: translate3d(0, calc(var(--split) * 1.5px), 0);
+}
+
+.mark__chan--b {
+  color: var(--chan-b);
+  transform: translate3d(calc(var(--split) * -13px), calc(var(--split) * 2px), 0);
+}
+
+/* ---- scanline break ----
+   A single extra copy carrying a STATIC stripe mask, translated horizontally.
+   The mask never animates, so the torn-tape look costs one transform. */
+.mark__break {
+  color: var(--tape);
+  opacity: calc(var(--split) * 0.55);
+  transform: translate3d(calc(var(--break-x, 0) * 1px), 0, 0);
+  -webkit-mask-image: repeating-linear-gradient(
+    to bottom,
+    #000 0 7px,
+    transparent 7px 15px
+  );
+  mask-image: repeating-linear-gradient(to bottom, #000 0 7px, transparent 7px 15px);
+}
+
+/* ---- delay line ----
+   Ghost taps. Base opacity is 0.62^n, set inline once at mount; the per-frame
+   cost is one offset each plus a single shared gate. */
+.mark__ghost {
+  color: var(--tape);
+  opacity: calc(var(--ghost-base, 0) * var(--ghost-gate, 0));
+  /* Two components: --gx is the delay line's actual sampled offset from n taps
+     ago, and the second term is the tap's own spatial trail so the repeats read
+     as repeats. Scaling the trail by --ghost-gate means the echoes collapse
+     back into the mark as the feedback dies at lock. */
+  transform: translate3d(
+    calc((var(--gx, 0) - (var(--n, 0) + 1) * 17 * var(--ghost-gate, 0)) * 1px),
+    0,
+    0
+  );
+  filter: blur(calc(1px + var(--n, 0) * 0.6px));
+}
+
+/* ---- bit-crush ----
+   Stepped, never eased. Applied to the solid layer for the burst only. */
+.hero[data-crush='1'] .mark__solid {
+  filter: url(#lr-crush1);
+  transform: translate3d(2px, 0, 0);
+}
+.hero[data-crush='2'] .mark__solid {
+  filter: url(#lr-crush2);
+  /* Position steps with the quantisation rather than easing through it. Three
+     hard offsets over 120ms — the sample-rate drop you can see. */
+  transform: translate3d(-4px, 1px, 0);
+}
+.hero[data-crush='3'] .mark__solid {
+  filter: url(#lr-crush3);
+  transform: translate3d(2px, -1px, 0);
+}
+
+.crush-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ---- reverb bloom + lock flash ---- */
+
+.hero__bloom {
+  position: absolute;
+  inset: -30% -12%;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 60% at 30% 50%,
+    color-mix(in srgb, var(--lamp) 26%, transparent),
+    transparent 70%
+  );
+  opacity: calc(var(--bloom, 0) * 0.5);
+  transform: scale(calc(0.86 + (1 - var(--bloom, 0)) * 0.5));
+  will-change: opacity, transform;
+}
+
+.hero__flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--tape);
+  opacity: var(--flash, 0);
+}
+
+/* Effect layers stop painting entirely once the signal has locked. */
+.hero[data-locked='true'] .mark__chan,
+.hero[data-locked='true'] .mark__break,
+.hero[data-locked='true'] .mark__ghost {
+  visibility: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Scope + readouts
+   -------------------------------------------------------------------------- */
+
+.hero__scope-row {
+  display: grid;
+  gap: 9px;
+  margin-top: clamp(14px, 2.4vh, 30px);
+  width: 100%;
+  max-width: min(100%, 880px);
+}
+
+.scope {
+  display: block;
+  width: 100%;
+  height: clamp(34px, 6vh, 52px);
+  border-top: var(--hair) solid var(--score);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.hero__gain {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  color: color-mix(in srgb, var(--dust) 66%, var(--room));
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+}
+
+.hero__readout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+}
+
+.hero__cat {
+  color: color-mix(in srgb, var(--dust) 70%, var(--room));
+}
+
+.hero__tc {
+  color: var(--lamp);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero__tagline {
+  max-width: 44ch;
+  margin-top: 18px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* ---- REC, audio toggle, replay ---- */
+
+.hero__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+}
+
+.hero__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--dust);
+}
+
+.hero__rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--peak);
+  opacity: 0.28;
+}
+
+.hero[data-locked='true'] .hero__rec-dot {
+  animation: rec-breathe 1100ms ease-in-out infinite;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero[data-locked='true'] .hero__rec-dot {
+    animation: none;
+  }
+}
+
+.hero__ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  transition:
+    color var(--t-quick) var(--ease-gear),
+    border-color var(--t-quick) var(--ease-gear);
+}
+
+.hero__ctrl:hover {
+  color: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.hero__ctrl[aria-pressed='true'] {
+  color: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.hero__ctrl-lamp {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.hero__ctrl[aria-pressed='true'] .hero__ctrl-lamp {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Scroll cue
+   -------------------------------------------------------------------------- */
+
+.hero__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: center;
+  padding: 10px 4px;
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.hero__cue:hover {
+  color: var(--lamp);
+}
+
+.hero__cue-line {
+  display: block;
+  width: var(--hair);
+  height: 26px;
+  background: currentColor;
+  transform-origin: top;
+  animation: cue-drop 2200ms var(--ease-gear) infinite;
+}
+
+@keyframes cue-drop {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.4;
+  }
+  45% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__cue-line {
+    animation: none;
+    transform: scaleY(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   States
+   -------------------------------------------------------------------------- */
+
+/* Pre-JS / SSR: the locked wordmark, hidden, with a safety net.
+   Hidden so the animation is never spoiled by a flash of the finished state —
+   and the 2.2s delayed fade means that if JS never takes over, the wordmark
+   still arrives rather than staying invisible forever. */
+.hero[data-mode='pre'] .mark {
+  opacity: 0;
+  animation: mark-safety 400ms linear 2200ms forwards;
+}
+
+@keyframes mark-safety {
+  to {
+    opacity: 1;
+  }
+}
+
+.hero[data-mode='pre'] .mark__layer {
+  visibility: hidden;
+}
+
+/* prefers-reduced-motion: the locked final state, one gentle fade, no clock.
+   The instrumentation stays — it is information, not motion. */
+.hero[data-mode='still'] .mark {
+  opacity: 1;
+  animation: mark-fade 420ms var(--ease-gear) both;
+}
+
+@keyframes mark-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero[data-mode='still'] .mark__layer {
+  visibility: hidden;
+}
+
+.hero[data-mode='still'] .mark__solid .mark__char {
+  filter: none;
+  transform: none;
+  opacity: 1;
+}
+
+.hero[data-mode='still'] .hero__cue-line {
+  animation: none;
+  transform: scaleY(1);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive — the hero adapts. It is never cropped and never hidden.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .hero__inner {
+    padding-top: calc(var(--u) * 1.7);
+    gap: var(--u-half);
+  }
+
+  .hero__gear--top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .vu {
+    align-items: center;
+  }
+
+  .hero__gain span:nth-child(even) {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero__readout {
+    flex-wrap: wrap;
+  }
+
+  .chain__link {
+    margin-inline: 6px;
+  }
+}

@@ -1,0 +1,154 @@
+/* ==========================================================================
+   Releases — the catalogue list and the release editor.
+
+   Only what admin.css does not already provide: the grid inside .ad-row, and
+   the two small blocks the editor adds (the runtime readout and the delete
+   row). Same tokens, same hairlines, no new colour, no radius, no shadow.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   List rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is
+   what keeps a 360px screen scrolling down rather than sideways.
+   -------------------------------------------------------------------------- */
+
+.rel-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rel-row__art {
+  align-self: start;
+}
+
+/* The 48px frame is too small to carry the "No image yet" plate SmartImage
+   draws; the hatched frame says it on its own, and the row says it in words. */
+.rel-row__art .img__empty-label {
+  display: none;
+}
+
+.rel-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rel-row__cat {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.rel-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.rel-row__link:hover {
+  color: var(--lamp);
+}
+
+.rel-row__by {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.rel-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+}
+
+.rel-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.rel-row__note {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .rel-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .rel-row__art {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .rel-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .rel-row__meta {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+  }
+
+  .rel-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .rel-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Editor
+   -------------------------------------------------------------------------- */
+
+.rel-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+.rel-runtime {
+  color: var(--dust);
+  font-variant-numeric: tabular-nums;
+}
+
+.rel-runtime__note {
+  color: color-mix(in srgb, var(--dust) 74%, var(--room));
+}
+
+/* Sits under the save bar, in its own form: a submit button inside the editor
+   form would submit the editor form, and a nested form is invalid HTML. */
+.rel-danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+  padding-top: var(--gap);
+}
+
+.rel-danger__text {
+  max-width: 60ch;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}

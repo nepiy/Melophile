@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "// note": "Next uses jsx:preserve and applies the automatic runtime itself. tsx needs it spelled out, or markdown.tsx compiles against the classic React.createElement runtime and throws.",
+    "jsx": "react-jsx",
+    "noEmit": true
+  },
+  "include": ["./**/*.ts", "../src/**/*.ts", "../src/**/*.tsx"]
+}

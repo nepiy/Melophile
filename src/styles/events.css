@@ -1,0 +1,485 @@
+/* ==========================================================================
+   /events — the diary, and one date.
+
+   Same rack as the rest of the site: hairlines separate everything, nothing is
+   rounded, nothing casts a shadow, and every colour is a token. --peak and
+   --peak-lit appear exactly twice — the sold-out chip and the one failure
+   message — because a reserved signal that gets used for decoration stops
+   being a signal.
+
+   Chrome is the utility mono: dates, prices, counts, chips, buttons, the
+   stepper. Prose is the serif. Headings are the display face.
+   ========================================================================== */
+
+/* The nav is fixed and out of flow, so the first section clears it itself —
+   the same measure /store and /music use, so the pages start on one line. */
+.ev {
+  padding-top: calc(var(--u2) + var(--u-half));
+}
+
+/* --------------------------------------------------------------------------
+   Breadcrumb — the way back up.
+   -------------------------------------------------------------------------- */
+
+.ev-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: var(--gap);
+  color: var(--dust);
+}
+
+.ev-crumbs__link {
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ev-crumbs__link:hover {
+  color: var(--lamp);
+}
+
+.ev-crumbs__sep {
+  color: var(--score);
+}
+
+.ev-crumbs__here {
+  color: var(--tape);
+}
+
+/* --------------------------------------------------------------------------
+   The diary — a rack of dates, one per unit, divided by hairlines.
+   -------------------------------------------------------------------------- */
+
+.ev-list {
+  border-top: var(--hair) solid var(--score);
+}
+
+.ev-list__item {
+  min-width: 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ev-empty {
+  margin-bottom: var(--u-half);
+}
+
+/* Group header for the past dates: a heading, a rule, and a count — the same
+   three parts as a channel strip. */
+.ev-group {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-top: var(--u);
+  padding-top: var(--u-half);
+  border-top: var(--hair) solid var(--score);
+  margin-bottom: var(--u-half);
+}
+
+.ev-group__h {
+  font-size: var(--fs-h3);
+  color: var(--tape);
+  white-space: nowrap;
+}
+
+.ev-group__rule {
+  flex: 1;
+  min-width: 14px;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.ev-group__n {
+  color: var(--dust);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   The card
+
+   Stacks under 560px — the poster on top, the words under it. Nothing is
+   dropped to fit and nothing scrolls sideways at 360px.
+   -------------------------------------------------------------------------- */
+
+.ev-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap-sm) var(--gap);
+  padding-block: var(--u-half);
+  align-items: start;
+}
+
+@media (min-width: 560px) {
+  .ev-card {
+    grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+@media (min-width: 900px) {
+  .ev-card {
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  }
+}
+
+/* A poster is landscape more often than it is square. */
+.img.ev-card__art {
+  aspect-ratio: 4 / 3;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.ev-card .img__el {
+  transition:
+    transform var(--t-ease) var(--ease-gear),
+    filter var(--t-ease) var(--ease-gear);
+  /* Held back so a wall of posters the label did not design still reads as one
+     page. Full colour on hover. */
+  filter: saturate(0.84) brightness(0.94);
+}
+
+.ev-card:hover .img__el,
+.ev-card:focus-visible .img__el {
+  transform: scale(1.024);
+  filter: saturate(1) brightness(1);
+}
+
+.ev-card:hover .img.ev-card__art {
+  border-color: color-mix(in srgb, var(--score) 40%, var(--lamp));
+}
+
+.ev-card__body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ev-card__when {
+  color: var(--tape);
+}
+
+.ev-card__title {
+  font-size: 1.1875rem;
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+  letter-spacing: 0;
+  color: var(--tape);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ev-card:hover .ev-card__title {
+  color: var(--lamp);
+}
+
+.ev-card__venue {
+  max-width: 44ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ev-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 4px;
+}
+
+.ev-card__price {
+  color: var(--tape);
+}
+
+/* A date that has gone is a record, not an offer: it dims, keeps its link, and
+   carries no price and no ticket line at all. */
+.ev-card[data-past='true'] .ev-card__when,
+.ev-card[data-past='true'] .ev-card__title {
+  color: var(--dust);
+}
+
+.ev-card[data-past='true'] .img__el {
+  filter: saturate(0.26) brightness(0.62);
+}
+
+.ev-card[data-past='true']:hover .ev-card__title,
+.ev-card[data-past='true']:focus-visible .ev-card__title {
+  color: var(--tape);
+}
+
+.ev-card[data-past='true']:hover .img__el,
+.ev-card[data-past='true']:focus-visible .img__el {
+  filter: saturate(0.5) brightness(0.8);
+}
+
+/* --------------------------------------------------------------------------
+   Availability — the only place on this page that is allowed to imply hurry.
+   -------------------------------------------------------------------------- */
+
+.ev-avail {
+  color: var(--dust);
+}
+
+/* Ten or fewer. The lamp, and only here. */
+.ev-avail[data-level='low'] {
+  color: var(--lamp);
+}
+
+.ev-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  line-height: 1;
+  color: var(--dust);
+  white-space: nowrap;
+}
+
+/* --peak is reserved for signal, and this is one: the thing cannot be bought.
+   --peak-lit is the only red on the site that clears AA as text. Matched to
+   the store's sold-out chip so one state has one look everywhere. */
+.ev-chip--out {
+  color: var(--peak-lit);
+  border-color: color-mix(in srgb, var(--peak) 55%, var(--score));
+}
+
+/* --------------------------------------------------------------------------
+   One date — poster left, the facts and the purchase right.
+   -------------------------------------------------------------------------- */
+
+.ev-detail {
+  display: grid;
+  gap: var(--u-half);
+  align-items: start;
+}
+
+@media (min-width: 880px) {
+  .ev-detail {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+    gap: var(--u);
+  }
+
+  /* The poster holds while a long description scrolls past it. */
+  .ev-detail__art {
+    position: sticky;
+    top: calc(var(--u) + var(--gap-sm));
+  }
+}
+
+.img.ev-detail__frame {
+  aspect-ratio: 4 / 3;
+}
+
+.ev-detail__body {
+  min-width: 0;
+}
+
+.ev-detail__badge {
+  margin-bottom: 12px;
+}
+
+.ev-detail__title {
+  color: var(--tape);
+}
+
+/* --------------------------------------------------------------------------
+   The facts — a rack of hairline rows, same skeleton as the store's spec sheet.
+   -------------------------------------------------------------------------- */
+
+.ev-facts {
+  margin-top: var(--u-half);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ev-facts__row {
+  display: grid;
+  grid-template-columns: 7em minmax(0, 1fr);
+  gap: var(--gap-sm);
+  align-items: baseline;
+  padding-block: 12px;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ev-facts__k {
+  padding-top: 2px;
+}
+
+.ev-facts__v {
+  color: var(--tape);
+}
+
+.ev-facts__addr {
+  display: grid;
+  gap: 2px;
+  font-style: normal;
+}
+
+.ev-facts__venue {
+  color: var(--tape);
+}
+
+.ev-facts__line {
+  color: var(--dust);
+}
+
+@media (max-width: 420px) {
+  .ev-facts__row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.ev-detail__desc {
+  margin-top: var(--u-half);
+}
+
+/* --------------------------------------------------------------------------
+   The ticket panel — the one thing on the page you came here to press.
+   -------------------------------------------------------------------------- */
+
+.ev-buy {
+  display: grid;
+  justify-items: start;
+  gap: var(--gap-sm);
+  margin-top: var(--u-half);
+  padding: var(--gap);
+  border: var(--hair) solid var(--score);
+}
+
+.ev-buy__when {
+  color: var(--dust);
+}
+
+/* Chrome, not prose: mono, tabular, and the largest figure on the page after
+   the title. Its own size rather than .mono, because .mono is 13px and a price
+   is not a caption. */
+.ev-buy__price {
+  font-family: var(--face-mono);
+  font-size: 1.375rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--tape);
+}
+
+.ev-buy__note {
+  max-width: 44ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ev-buy__go {
+  min-height: 44px;
+}
+
+/* --------------------------------------------------------------------------
+   The picker — a stepper and the buy button.
+   -------------------------------------------------------------------------- */
+
+.ev-tp {
+  display: grid;
+  justify-items: start;
+  gap: var(--gap-sm);
+}
+
+.ev-tp__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gap-sm) var(--gap);
+}
+
+.ev-tp__field {
+  display: grid;
+  gap: 8px;
+}
+
+.ev-tp__qty {
+  display: inline-flex;
+  align-items: stretch;
+  border: var(--hair) solid var(--score);
+}
+
+.ev-tp__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-height: 44px;
+  font-family: var(--face-mono);
+  font-size: 1rem;
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ev-tp__step:hover:not(:disabled) {
+  color: var(--lamp);
+}
+
+.ev-tp__step:disabled {
+  color: color-mix(in srgb, var(--dust) 45%, var(--room));
+  cursor: not-allowed;
+}
+
+/* Inward, so the ring does not sit on the neighbouring hairline and read as a
+   broken border. */
+.ev-tp__step:focus-visible {
+  outline-offset: -2px;
+}
+
+.ev-tp__num {
+  width: 3.4em;
+  padding: 10px 4px;
+  border-inline: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--tape);
+  /* Our own steppers are either side of it; the browser's are noise. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ev-tp__num::-webkit-outer-spin-button,
+.ev-tp__num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ev-tp__go {
+  min-height: 44px;
+}
+
+/* The only red text on a public page, and it is a failure state. */
+.ev-tp__error {
+  max-width: 44ch;
+  color: var(--peak-lit);
+}
+
+/* On a narrow phone the buy button stops being a chip and becomes the width of
+   the column. Nothing here scrolls sideways at 360px. */
+@media (max-width: 420px) {
+  .ev-buy {
+    justify-items: stretch;
+    padding: var(--gap-sm);
+  }
+
+  .ev-tp,
+  .ev-tp__row {
+    width: 100%;
+  }
+
+  .ev-tp__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ev-tp__go,
+  .ev-buy__go,
+  .ev-tp__cart {
+    width: 100%;
+  }
+}

@@ -1,0 +1,464 @@
+/* ==========================================================================
+   Auth — sign in, sign up, password recovery, email confirmation.
+
+   One centred panel per page, built from the same furniture as the rest of the
+   public site: hairline edges, no fill that lifts, no shadow, no radius. The
+   admin's sign-in gate is the reference for the shape; this is that shape in
+   the public site's own vocabulary, sitting inside a normal rack unit so the
+   nav and footer stay where they always are.
+
+   Every value below is a token. The only literal colours on any auth screen
+   are the four in the Google mark, and those live in the SVG itself because
+   Google's brand guidelines require them.
+   ========================================================================== */
+
+/* The nav is fixed and every inner page clears it with its own top padding, so
+   that stays at the full two rack units .sec gives it. Only the bottom is
+   trimmed: there is one short panel here, and stranding it above 88px of empty
+   space reads as a page that failed to load the rest of itself. */
+.au-sec {
+  padding-bottom: var(--u);
+}
+
+.au__panel {
+  /* Wide enough for a 64-character error sentence to sit on two lines, narrow
+     enough that the eye never has to travel to find the next field. */
+  width: min(480px, 100%);
+  margin-inline: auto;
+  padding: var(--u-half) clamp(16px, 5vw, var(--gap)) var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+/* The channel strip, as on every other unit on the site. */
+.au__strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--u-half);
+}
+
+.au__chan {
+  color: var(--lamp);
+  font-size: 0.75rem;
+}
+
+.au__rule {
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.au__strip-label {
+  white-space: nowrap;
+}
+
+.au__title {
+  font-size: var(--fs-h2);
+  color: var(--tape);
+}
+
+.au__text {
+  margin-top: 10px;
+  max-width: 46ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   The foot of the panel — where you go if this is not the page you wanted.
+   -------------------------------------------------------------------------- */
+
+.au__foot {
+  display: grid;
+  gap: 10px;
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.au__foot-line {
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Form
+   -------------------------------------------------------------------------- */
+
+.au-form {
+  display: grid;
+  gap: var(--gap-sm);
+  margin-top: var(--u-half);
+}
+
+.au-field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.au-field__label {
+  color: var(--dust);
+}
+
+/* One height for every single-line box, so a stack of fields reads as one
+   machined edge. Identical geometry to the booking form's controls. */
+.au-box {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 14px;
+  background: var(--room);
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-body);
+  font-variation-settings: var(--body-axes);
+  font-size: var(--fs-body);
+  line-height: 1.35;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.au-box:hover {
+  border-color: color-mix(in srgb, var(--score) 52%, var(--dust));
+}
+
+.au-box::placeholder {
+  color: color-mix(in srgb, var(--dust) 62%, var(--room));
+}
+
+/* An address, a username and a password are all data, and data is set in the
+   utility mono. A person's name is prose, and stays in the serif. */
+.au-box--mono {
+  font-family: var(--face-mono);
+  font-variation-settings: normal;
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* The hairline is the only thing an error changes. No fill, no glow, no lift. */
+.au-box[aria-invalid='true'] {
+  border-color: var(--peak);
+}
+
+.au-hint {
+  color: var(--dust);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* --peak carries the hairline; --peak-lit carries the words. --peak is 3.23:1
+   and would fail as text, so it is never text. */
+.au-err {
+  padding-left: 11px;
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.au-alert {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: var(--hair) solid var(--peak);
+}
+
+.au-alert__label {
+  color: var(--peak-lit);
+}
+
+.au-alert__text {
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Password — the box, the show/hide toggle, the meter and the checklist.
+   -------------------------------------------------------------------------- */
+
+.au-pass {
+  position: relative;
+  display: block;
+}
+
+.au-pass .au-box {
+  /* Room for the toggle, which sits inside the box rather than beside it so
+     the field keeps the same outer width as every other one. */
+  padding-right: 76px;
+}
+
+.au-pass__toggle {
+  position: absolute;
+  top: var(--hair);
+  right: var(--hair);
+  bottom: var(--hair);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-left: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.au-pass__toggle:hover {
+  color: var(--lamp);
+}
+
+.au-pass__toggle[aria-pressed='true'] {
+  color: var(--lamp);
+}
+
+.au-meter {
+  display: grid;
+  gap: 6px;
+}
+
+/* Four segments, each a hairline. A meter, not a rule — it reports level, and
+   the words beside it carry the actual meaning for anyone not looking at it. */
+.au-meter__track {
+  display: flex;
+  gap: 4px;
+}
+
+.au-meter__seg {
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+  transition: background-color var(--t-quick) var(--ease-gear);
+}
+
+.au-meter__seg.is-lit {
+  background: var(--lamp);
+}
+
+.au-meter__label {
+  min-height: 1.1em;
+  color: var(--dust);
+}
+
+.au-rules {
+  display: grid;
+  gap: 6px;
+}
+
+.au-rule {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--dust);
+}
+
+.au-rule__mark {
+  flex: none;
+  position: relative;
+  width: 11px;
+  height: 11px;
+  border: var(--hair) solid var(--score);
+}
+
+/* The tick is a glyph, not a rule, so it is drawn at the weight a glyph needs
+   to be legible at 11px. */
+.au-rule.is-met .au-rule__mark {
+  border-color: var(--lamp);
+}
+
+.au-rule.is-met .au-rule__mark::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 3px;
+  height: 7px;
+  border-right: 2px solid var(--lamp);
+  border-bottom: 2px solid var(--lamp);
+  transform: rotate(42deg);
+}
+
+.au-rule__text {
+  line-height: 1.3;
+}
+
+.au-rule.is-met {
+  color: var(--tape);
+}
+
+/* --------------------------------------------------------------------------
+   Checkboxes — remember me, and the terms.
+   -------------------------------------------------------------------------- */
+
+.au-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding-block: 2px;
+  cursor: pointer;
+}
+
+.au-check__box {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  background: var(--room);
+  border: var(--hair) solid var(--score);
+  cursor: pointer;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.au-check:hover .au-check__box {
+  border-color: color-mix(in srgb, var(--score) 52%, var(--dust));
+}
+
+.au-check__box:checked {
+  border-color: var(--lamp);
+}
+
+.au-check__box:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border-right: 2px solid var(--lamp);
+  border-bottom: 2px solid var(--lamp);
+  transform: rotate(42deg);
+}
+
+.au-check__text {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Submit
+   -------------------------------------------------------------------------- */
+
+.au-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.au-actions .btn {
+  width: 100%;
+}
+
+/* The button's own label never changes: a word that changes width reflows the
+   button out from under the cursor mid-click. The state is announced here. */
+.au-status {
+  min-height: 1.1em;
+  color: var(--dust);
+}
+
+/* --------------------------------------------------------------------------
+   Google
+   -------------------------------------------------------------------------- */
+
+.au-or {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-top: var(--u-half);
+  color: var(--dust);
+}
+
+.au-or::before,
+.au-or::after {
+  content: '';
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.au-oauth {
+  margin-top: var(--gap-sm);
+}
+
+.au-oauth__btn {
+  width: 100%;
+}
+
+.au-oauth__mark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Outcomes — the notice that replaces a form, and the honest panel shown when
+   accounts are not configured. Both use the lit left edge that says "read me".
+   -------------------------------------------------------------------------- */
+
+.au-note {
+  display: grid;
+  gap: 12px;
+  margin-top: var(--u-half);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--lamp);
+}
+
+.au-note__label {
+  color: var(--lamp);
+}
+
+.au-note__text {
+  max-width: 46ch;
+  color: var(--tape);
+  font-size: var(--fs-body);
+}
+
+.au-note__aside {
+  max-width: 46ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.au-off {
+  display: grid;
+  gap: 12px;
+  margin-top: var(--u-half);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--peak);
+}
+
+.au-off__label {
+  color: var(--peak-lit);
+}
+
+.au-off__text {
+  max-width: 46ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.au-off__hint {
+  max-width: 52ch;
+  color: var(--dust);
+  overflow-wrap: anywhere;
+}
+
+/* The plain line the login page shows for ?error=… — a sentence, not a banner. */
+.au-line {
+  margin-top: var(--gap-sm);
+  padding-left: 11px;
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}

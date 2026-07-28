@@ -1,0 +1,114 @@
+/* ==========================================================================
+   The four singleton pages — about, contact, settings and home.
+
+   Almost nothing: these screens are panels of fields, and admin.css already
+   draws every field. What is here is the About photo slots, which have no
+   equivalent anywhere else in the admin, plus the two shared readouts the
+   panel heads use. Same tokens, same hairlines, no new colour, no radius,
+   no shadow.
+   ========================================================================== */
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+/* The mono readout on the right of a panel head. */
+.ap-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* A plain sentence at the top of a panel body, above the controls it explains.
+   Prose, so it is the serif — the chrome around it is the mono. */
+.ap-note {
+  max-width: 64ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.ap-note--quiet {
+  margin-top: 6px;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* Sits under the nav-label group's own label, which supplies the spacing. */
+.ap-check {
+  align-content: start;
+}
+
+/* --------------------------------------------------------------------------
+   About photo slots
+
+   The whole point of this block: on the public page an unfilled slot is not in
+   the DOM at all, so in here it has to be unmistakably present and obviously
+   fillable. Each slot is a bordered unit with its own number, its own state
+   and its own order controls — a rack of frames, some of them empty.
+   -------------------------------------------------------------------------- */
+
+.ap-slots {
+  display: grid;
+  gap: var(--gap);
+  margin-top: var(--gap);
+}
+
+.ap-slot {
+  border: var(--hair) solid var(--score);
+}
+
+.ap-slot__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  border-bottom: var(--hair) solid var(--score);
+  background: var(--rack);
+}
+
+.ap-slot__n {
+  color: var(--lamp);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty is the ordinary state here, so it is stated rather than warned about;
+   a filled slot is the one that changes colour. */
+.ap-slot__state {
+  color: var(--dust);
+}
+
+.ap-slot__state[data-filled='true'] {
+  color: var(--lamp);
+}
+
+.ap-slot__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ap-slot__body {
+  display: grid;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+.ap-add {
+  justify-self: start;
+  margin-top: var(--gap);
+}
+
+/* The slot actions live in their own empty forms outside the editor form. They
+   have nothing to draw, and `hidden` already keeps them out of the layout —
+   this only stops a stylesheet elsewhere from giving them a box. */
+.ap-forms {
+  display: none;
+}

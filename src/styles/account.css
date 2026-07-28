@@ -1,0 +1,905 @@
+/* ==========================================================================
+   Account — the signed-in customer's dashboard, and the avatar menu in the nav.
+
+   Same furniture as the rest of the public site: hairlines separate every
+   surface, nothing lifts, nothing is rounded, nothing casts a shadow. Every
+   value here is a token from tokens.css; there is not a raw colour in the file.
+
+   TWO THINGS WORTH KNOWING BEFORE EDITING
+
+   1. This sheet is imported from BOTH the account layout and Nav.tsx, because
+      the avatar menu lives in the nav on every page while the dashboard styles
+      only matter under /account. Load order between stylesheets is therefore
+      not guaranteed, so nothing here relies on winning a tie against auth.css.
+      Where a rule has to beat one of the .au-* form rules it is qualified by
+      element (textarea.ac-area), which raises specificity rather than trusting
+      the cascade.
+
+   2. The form controls themselves ARE auth.css's — .au-field, .au-box, .au-err
+      and the rest. The account forms are the same forms as the sign-in forms;
+      giving them a second, near-identical set of classes would be two places
+      to change one border colour. The account layout imports auth.css for
+      exactly that reason.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Shell
+   -------------------------------------------------------------------------- */
+
+/* The nav is fixed and .sec's top padding clears it, as on every inner page.
+   Only the bottom is trimmed — a dashboard ends on a hairline, not on 88px of
+   empty room. */
+.ac-sec {
+  padding-bottom: var(--u);
+}
+
+.ac-body {
+  margin-top: var(--gap);
+}
+
+/* --------------------------------------------------------------------------
+   Identity — who you are signed in as. Avatar, name, handle, status.
+   -------------------------------------------------------------------------- */
+
+.ac-id {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  padding-bottom: var(--gap);
+}
+
+.ac-id__text {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ac-id__name {
+  font-family: var(--face-display);
+  font-variation-settings: var(--head-axes);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-head);
+  letter-spacing: var(--tr-head);
+  color: var(--tape);
+  overflow-wrap: anywhere;
+}
+
+.ac-id__handle {
+  color: var(--dust);
+}
+
+.ac-id__chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* A status is a reading, so it is set in the mono and boxed like one. */
+.ac-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+}
+
+.ac-chip[data-tone='lamp'] {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* --peak is 3.23:1 and never carries words. The hairline is --peak, the words
+   are --peak-lit at 5.77:1. */
+.ac-chip[data-tone='peak'] {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+/* --------------------------------------------------------------------------
+   Avatar — a picture, or initials on a hairline square. Never a silhouette.
+   -------------------------------------------------------------------------- */
+
+.ac-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  overflow: hidden;
+}
+
+.ac-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ac-avatar__initials {
+  font-family: var(--face-mono);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--dust);
+}
+
+.ac-avatar--sm {
+  width: 26px;
+  height: 26px;
+}
+
+.ac-avatar--sm .ac-avatar__initials {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+}
+
+.ac-avatar--lg {
+  width: 96px;
+  height: 96px;
+}
+
+.ac-avatar--lg .ac-avatar__initials {
+  font-size: 1.375rem;
+}
+
+/* --------------------------------------------------------------------------
+   Tabs — one strip, and at 360px it scrolls sideways rather than wrapping into
+   two ragged rows. A tab strip that reflows stops reading as a strip.
+   -------------------------------------------------------------------------- */
+
+.ac-tabs {
+  border-block: var(--hair) solid var(--score);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.ac-tabs__list {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.ac-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 15px 18px;
+  color: var(--dust);
+  white-space: nowrap;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ac-tab:first-child {
+  padding-left: 0;
+}
+
+.ac-tab + .ac-tab {
+  border-left: var(--hair) solid var(--score);
+}
+
+/* The same travelling underline the nav links use, so a tab and a nav item
+   behave identically under the cursor. */
+.ac-tab::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: var(--hair);
+  background: var(--lamp);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t-quick) var(--ease-gear);
+}
+
+.ac-tab:hover,
+.ac-tab[aria-current='page'] {
+  color: var(--tape);
+}
+
+.ac-tab:hover::after,
+.ac-tab[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+/* Focus rings on a horizontally scrolling strip need room, or the ring is
+   clipped by the scroll container's edge. */
+.ac-tab:focus-visible {
+  outline-offset: -3px;
+}
+
+/* --------------------------------------------------------------------------
+   Notices — the two that persist across every account page.
+
+   A lamp edge means "read this". A peak edge means "something is wrong and it
+   is not your typing".
+   -------------------------------------------------------------------------- */
+
+.ac-note {
+  display: grid;
+  gap: 10px;
+  margin-top: var(--gap);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--lamp);
+}
+
+.ac-note__label {
+  color: var(--lamp);
+}
+
+.ac-note__text {
+  max-width: 62ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.ac-banner {
+  display: grid;
+  gap: 10px;
+  margin-top: var(--gap);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--peak);
+}
+
+.ac-banner__label {
+  color: var(--peak-lit);
+}
+
+.ac-banner__text {
+  max-width: 62ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.ac-banner__reason {
+  max-width: 62ch;
+  color: var(--dust);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Panels — one unit per subject, each with its own channel strip.
+   -------------------------------------------------------------------------- */
+
+.ac-panel {
+  margin-top: var(--gap);
+  padding: var(--u-half) clamp(16px, 4vw, var(--gap)) var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+.ac-panel.ac-panel--danger {
+  border-color: var(--peak);
+}
+
+.ac-panel__strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--gap-sm);
+}
+
+.ac-panel__chan {
+  color: var(--lamp);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ac-panel__rule {
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.ac-panel__strip-label {
+  white-space: nowrap;
+}
+
+.ac-panel__title {
+  font-size: var(--fs-h3);
+  color: var(--tape);
+}
+
+.ac-panel__text {
+  max-width: 62ch;
+  margin-top: 10px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+/* A list of consequences, or of what a thing does. The marker is a hairline
+   dash rather than a bullet, because there is not a round thing on this site
+   except the REC dot. */
+.ac-list {
+  display: grid;
+  gap: 8px;
+  max-width: 62ch;
+  margin-top: var(--gap-sm);
+  list-style: none;
+}
+
+.ac-list__item {
+  position: relative;
+  padding-left: 20px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.ac-list__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 10px;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.ac-panel__foot {
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Definition rows — the read-only half of the account.
+   -------------------------------------------------------------------------- */
+
+.ac-rows {
+  margin-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ac-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  padding: 13px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 620px) {
+  .ac-row {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: baseline;
+  }
+}
+
+.ac-row__key {
+  color: var(--dust);
+  /* dt inherits the grid item's alignment; this keeps a two-line key from
+     dragging its value out of line. */
+  padding-top: 2px;
+}
+
+.ac-row__val {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* A user id is a support reference, not prose. Small, mono, selectable. */
+.ac-row__val--ref {
+  color: var(--dust);
+  font-size: 0.75rem;
+  user-select: all;
+}
+
+/* Blank is a state, not an empty row. It says so, and offers the way out. */
+.ac-unset {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--dust);
+}
+
+.ac-unset__word {
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Forms — the controls are auth.css's. These are the pieces it has no reason
+   to know about.
+   -------------------------------------------------------------------------- */
+
+.ac-form {
+  display: grid;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-sm);
+}
+
+/* Two fields side by side once there is room for both to hold a real value.
+   Below that they stack, like everything else. */
+.ac-pair {
+  display: grid;
+  gap: var(--gap-sm);
+}
+
+@media (min-width: 620px) {
+  .ac-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap-sm) var(--gap);
+  }
+}
+
+/* Element-qualified so it beats .au-box's min-height whichever stylesheet the
+   bundler happens to emit first. */
+textarea.ac-area {
+  min-height: 120px;
+  padding-top: 12px;
+  line-height: var(--lh-body);
+  resize: vertical;
+}
+
+/* Native select arrows are drawn by the OS in the OS's colours, which is the
+   one thing on this page that would not be a token. */
+select.ac-select {
+  appearance: none;
+  padding-right: 42px;
+  cursor: pointer;
+}
+
+.ac-select-wrap {
+  position: relative;
+  display: block;
+}
+
+/* The caret: two hairlines, drawn in the same ink as the label. */
+.ac-select-wrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 7px;
+  height: 7px;
+  margin-top: -5px;
+  border-right: var(--hair) solid var(--dust);
+  border-bottom: var(--hair) solid var(--dust);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.ac-count {
+  color: var(--dust);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-align: right;
+}
+
+/* The line that says "Changes saved." A status, not a celebration. */
+.ac-saved {
+  min-height: 1.1em;
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Buttons that are not the site's one filled button.
+   -------------------------------------------------------------------------- */
+
+.ac-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* Two classes, so it outranks .btn regardless of stylesheet order. */
+.btn.ac-btn-danger {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+.btn.ac-btn-danger:hover {
+  border-color: var(--peak-lit);
+  color: var(--peak-lit);
+}
+
+.btn.ac-btn-danger:disabled:hover {
+  border-color: var(--peak);
+}
+
+/* --------------------------------------------------------------------------
+   Avatar upload
+   -------------------------------------------------------------------------- */
+
+.ac-upload {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  margin-top: var(--gap-sm);
+}
+
+.ac-upload__side {
+  display: grid;
+  gap: var(--gap-sm);
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* A real file input, so it keeps its keyboard behaviour and its focus ring.
+   Only the button inside it is restyled. */
+.ac-file {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+}
+
+.ac-file::file-selector-button {
+  margin-right: 12px;
+  padding: 9px 14px;
+  background: transparent;
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  cursor: pointer;
+  transition:
+    border-color var(--t-quick) var(--ease-gear),
+    color var(--t-quick) var(--ease-gear);
+}
+
+.ac-file::file-selector-button:hover {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+.ac-upload__preview {
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Address book
+   -------------------------------------------------------------------------- */
+
+.ac-cards {
+  display: grid;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-sm);
+}
+
+.ac-card {
+  padding: var(--gap-sm) clamp(14px, 4vw, var(--gap));
+  border: var(--hair) solid var(--score);
+}
+
+/* The blank one, which sits under the list rather than in it. */
+.ac-card--new {
+  margin-top: var(--gap-sm);
+}
+
+.ac-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+}
+
+.ac-card__label {
+  color: var(--tape);
+}
+
+.ac-card__lines {
+  display: grid;
+  gap: 3px;
+  margin-top: var(--gap-sm);
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.ac-card__line--dim {
+  color: var(--dust);
+}
+
+.ac-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+  margin-top: var(--gap-sm);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+/* The second click of a two-click delete. No native confirm(), and no modal
+   that can be dismissed by muscle memory. */
+.ac-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+}
+
+.ac-confirm__text {
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Activity
+   -------------------------------------------------------------------------- */
+
+.ac-log {
+  margin-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ac-log__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 13px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 620px) {
+  .ac-log__item {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: baseline;
+  }
+}
+
+.ac-log__when {
+  color: var(--dust);
+}
+
+.ac-log__what {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.ac-log__meta {
+  display: flex;
+  gap: 4px 16px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  color: var(--dust);
+}
+
+/* --------------------------------------------------------------------------
+   Empty states — an invitation, never a report of nothing.
+   -------------------------------------------------------------------------- */
+
+.ac-empty {
+  margin-top: var(--gap-sm);
+  padding: var(--u) var(--gap);
+  border: var(--hair) dashed var(--score);
+  text-align: center;
+}
+
+.ac-empty__title {
+  font-family: var(--face-display);
+  font-variation-settings: var(--head-axes);
+  font-size: var(--fs-h3);
+  color: var(--tape);
+}
+
+.ac-empty__text {
+  max-width: 44ch;
+  margin: 10px auto 0;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ac-empty__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+  margin-top: var(--gap);
+}
+
+/* ==========================================================================
+   The account menu in the nav.
+
+   Loaded on every page, not just under /account, because the nav is. It is the
+   only part of this sheet that has to behave inside the mobile nav sheet as
+   well as on the bar.
+   ========================================================================== */
+
+.nav__account {
+  display: flex;
+  align-items: center;
+}
+
+.ac-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ac-menu__signin {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 2px;
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ac-menu__signin:hover {
+  color: var(--tape);
+}
+
+.ac-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 10px 5px 5px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+  cursor: pointer;
+  transition:
+    border-color var(--t-quick) var(--ease-gear),
+    color var(--t-quick) var(--ease-gear);
+}
+
+.ac-menu__trigger:hover,
+.ac-menu__trigger[aria-expanded='true'] {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+.ac-menu__name {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-menu__pop {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: var(--z-nav);
+  min-width: 208px;
+  background: var(--room);
+  border: var(--hair) solid var(--score);
+}
+
+.ac-menu__head {
+  padding: 12px 14px;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ac-menu__head-name {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+.ac-menu__head-handle {
+  margin-top: 3px;
+  color: var(--dust);
+}
+
+.ac-menu__item {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--dust);
+  cursor: pointer;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ac-menu__item:hover {
+  color: var(--lamp);
+}
+
+.ac-menu__item + .ac-menu__item,
+.ac-menu__out {
+  border-top: var(--hair) solid var(--score);
+}
+
+.ac-menu__out .ac-menu__item {
+  border-top: 0;
+  color: var(--dust);
+}
+
+.ac-menu__item:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Inside the mobile nav sheet the bar is a column, so the menu becomes part of
+   that column rather than a panel floating out of the bottom of it. */
+@media (max-width: 860px) {
+  .nav__account {
+    display: block;
+  }
+
+  .ac-menu {
+    display: block;
+  }
+
+  .ac-menu__signin {
+    padding: 16px 0;
+  }
+
+  .ac-menu__trigger {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px 0;
+    border: 0;
+  }
+
+  .ac-menu__trigger:hover,
+  .ac-menu__trigger[aria-expanded='true'] {
+    border: 0;
+  }
+
+  .ac-menu__name {
+    max-width: none;
+  }
+
+  .ac-menu__pop {
+    position: static;
+    min-width: 0;
+    border: 0;
+    border-top: var(--hair) solid var(--score);
+  }
+
+  .ac-menu__head {
+    display: none;
+  }
+
+  .ac-menu__item {
+    padding: 14px 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion — one short fade on the menu, and nothing else moves on these pages.
+   The duration tokens already collapse under prefers-reduced-motion; this says
+   so out loud for the one thing that animates rather than transitions.
+   -------------------------------------------------------------------------- */
+
+.ac-menu__pop {
+  animation: ac-pop var(--t-quick) var(--ease-gear);
+}
+
+@keyframes ac-pop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-menu__pop {
+    animation: none;
+  }
+
+  .ac-tab::after {
+    transition: none;
+  }
+}

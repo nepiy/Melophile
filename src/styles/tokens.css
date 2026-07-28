@@ -1,0 +1,209 @@
+/* ==========================================================================
+   Melophile Records — design tokens
+   The only place a raw value is allowed to appear. Every other rule in this
+   codebase references a custom property defined here.
+   Contrast ratios are computed, not estimated (WCAG 2.1 relative luminance).
+   ========================================================================== */
+
+:root {
+  /* ---------------------------------------------------------------------
+     COLOUR — a smoke-filled room with the tungsten still on.
+
+     Not a black studio any more: a warm tobacco-brown haze, the colour of a
+     live room after a long session, with the lamp burning yellow through it.
+     Every ratio below is computed (WCAG 2.1 relative luminance), not guessed.
+     --------------------------------------------------------------------- */
+
+  /* Base. HSL 39° 39% 12%. Smoky yellow-brown — dark enough to sit behind
+     bright type, warm enough that nothing on the page reads as neutral. */
+  --room: #2a2113;
+
+  /* Panel surface. 1.10:1 against --room — deliberate. Surfaces on this site
+     separate by hairline, never by lift. There are no shadows anywhere. */
+  --rack: #332818;
+
+  /* The engraved line between two panels. 1.37:1 — quiet until you look. */
+  --score: #453720;
+
+  /* The smoke itself: the drifting haze layer over the base. 1.23:1, so it
+     reads as atmosphere and never as an edge. */
+  --haze: #3d3018;
+
+  /* Secondary text: labels, meta, dates, captions.
+     5.75:1 on --room · 5.23:1 on --rack — both clear AA for body text. */
+  --dust: #ab9a76;
+
+  /* Primary text. Aged paper yellowed by the same smoke, not #FFF.
+     13.14:1 on --room · 11.95:1 on --rack. */
+  --tape: #f5e9cc;
+
+  /* THE accent, and the only one. Tungsten burning through smoke.
+     9.38:1 on --room — clears AA as text, as a focus ring, and inverted as a
+     button fill (--room on --lamp is the same 9.38:1). */
+  --lamp: #f0c14b;
+
+  /* ---- reserved signal — not part of the palette, never decoration ----
+     Used only for: the REC dot, an over-level meter segment, the hairline on
+     an errored field, and the confirm state of a destructive admin action. */
+  --peak: #cf3a24; /* 3.23:1 — fails AA for text, so it is NEVER text */
+  --peak-lit: #f07a5f; /* 5.77:1 — the same red, for error text only */
+
+  /* Derived alpha steps. Kept as tokens so no rule invents its own opacity. */
+  --room-veil: rgb(42 33 19 / 0.88);
+  --lamp-ghost: rgb(240 193 75 / 0.14);
+  --lamp-trace: rgb(240 193 75 / 0.42);
+  --tape-ghost: rgb(245 233 204 / 0.08);
+  --smoke-a: rgb(93 74 38 / 0.5);
+  --smoke-b: rgb(240 193 75 / 0.07);
+
+  /* Chromatic separation channels for the hero. Screen-blended they sum to
+     --tape; over a base this warm the result lands a shade brighter than the
+     locked wordmark, which is what you want mid-glitch and what resolves away
+     as the offset closes. */
+  --chan-r: rgb(245 0 0);
+  --chan-g: rgb(0 233 0);
+  --chan-b: rgb(0 0 204);
+
+  /* ---------------------------------------------------------------------
+     TYPE — three roles, three objects in a control room.
+     Families are injected by next/font as --font-display / -body / -mono.
+     --------------------------------------------------------------------- */
+
+  /* The engraved brand plate on the console. */
+  --face-display: var(--font-display), 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  /* The manual, and the liner notes. */
+  --face-body: var(--font-body), 'Newsreader', Georgia, 'Times New Roman', serif;
+  /* The silkscreened channel strip. */
+  --face-mono:
+    var(--font-mono), 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Variable-font axis settings. --wdth is never animated: changing glyph
+     advance widths is layout, and layout is thrash. */
+  --wordmark-axes: 'wdth' 118, 'wght' 700;
+  --head-axes: 'wdth' 104, 'wght' 600;
+  /* Light-on-dark reads heavier than it measures, so body sits at 380. */
+  --body-axes: 'opsz' 16, 'wght' 380;
+  --body-axes-lg: 'opsz' 32, 'wght' 340;
+
+  /* Sizes. Fluid where it matters, fixed where precision matters more. */
+  /* Width-driven, but capped against viewport HEIGHT too — otherwise a 1280×720
+     laptop gets a wordmark so tall it pushes the scroll cue below the fold. */
+  --fs-wordmark: clamp(2.4rem, min(12.5vw, 20vh), 10.5rem);
+  --fs-h1: clamp(2rem, 4.6vw, 3.25rem);
+  --fs-h2: clamp(1.5rem, 2.6vw, 1.875rem);
+  --fs-h3: 1.125rem;
+  --fs-body: 1.0625rem; /* 17px */
+  --fs-body-lg: 1.1875rem; /* 19px — /about prose */
+  --fs-small: 0.9375rem;
+  --fs-mono: 0.8125rem; /* 13px — catalog numbers, dates, durations */
+  --fs-label: 0.6875rem; /* 11px — channel strips, nav, buttons, form labels */
+
+  --lh-tight: 0.92;
+  --lh-head: 1.08;
+  --lh-body: 1.65;
+  --lh-prose: 1.72;
+
+  --tr-wordmark: 0.015em;
+  --tr-head: -0.01em;
+  --tr-label: 0.14em; /* a channel strip is tracked out */
+
+  --measure: 64ch;
+  --measure-wide: 68ch;
+
+  /* ---------------------------------------------------------------------
+     SPACE — a rack unit is the module. 1U = 1.75in ≈ 44mm.
+     --------------------------------------------------------------------- */
+  --u: 44px;
+  --u-half: 22px;
+  --u2: 88px;
+  --u4: 176px;
+
+  --gap: 24px;
+  --gap-sm: 12px;
+  --gap-xs: 6px;
+  --hair: 1px; /* every rule on this site. never 2px. */
+  --max: 1320px;
+  --max-prose: 78ch;
+  --strip: 56px; /* left channel-strip gutter, ≥1024px only */
+  --pad-x: clamp(20px, 5vw, 56px);
+
+  /* The single left inset every container uses — nav, hero and page shells
+     alike. Without one shared value the nav logo and the wordmark do not line
+     up, and on a site whose whole idea is a rack, that misalignment shows. */
+  --content-inset: var(--pad-x);
+
+  /* Nothing is rounded except the REC dot. */
+  --radius: 0;
+
+  /* ---------------------------------------------------------------------
+     MOTION — four durations, three easings, named for what they do.
+     --------------------------------------------------------------------- */
+  --t-flick: 90ms; /* a relay closing: lock transient, button press */
+  --t-quick: 180ms; /* hover, focus, filter change */
+  --t-ease: 420ms; /* scroll reveal, dialog open */
+  --t-settle: 900ms; /* the span a staggered group takes end to end */
+
+  --ease-gear: cubic-bezier(0.16, 1, 0.3, 1); /* decelerating, mechanical */
+  --ease-transient: cubic-bezier(0.2, 0.9, 0.1, 1); /* stiff, overshoot-capable */
+  --step-crush: steps(3, end); /* quantised. bit-crush only. */
+
+  --z-nav: 40;
+  --z-dialog: 90;
+  --z-toast: 100;
+}
+
+/* Registered so they interpolate as numbers and skip re-parsing every frame.
+   The hero writes these six and nothing else. */
+@property --sweep {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --env {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --split {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --hand {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --drift-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --drift-r {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* The channel strip only exists at this width, so only here does content need
+   to clear it. */
+@media (min-width: 1024px) {
+  :root {
+    --content-inset: calc(var(--pad-x) + var(--strip));
+  }
+}
+
+/* Reduced motion is a site-wide contract, not a hero special case.
+   Anything that moves reads this token rather than re-querying the media. */
+:root {
+  --motion: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0;
+    --t-flick: 0ms;
+    --t-quick: 1ms;
+    --t-ease: 1ms;
+    --t-settle: 1ms;
+  }
+}

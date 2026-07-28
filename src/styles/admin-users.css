@@ -1,0 +1,547 @@
+/* ==========================================================================
+   Customers, and their orders.
+
+   Only what admin.css and admin-events.css do not already provide: the search
+   bar, the avatar, the account-status chips, the address cards, the activity
+   log, the payments list and the staff panel. Everything else on these screens
+   is .ad-* and .aor-* doing the job it already does elsewhere — the customer
+   order list is deliberately the order list, because the client should learn
+   one screen and not two.
+
+   ONE PREFIX: au-. Clear of ad- (the admin frame), aev- and aor- (events and
+   orders), sto- (the store admin), st- (the storefront), bk- (the booking
+   desk), ros- (the roster), ap- (the admin pages) and or-/ac- (the customer's
+   own account screens).
+
+   No new colour. --peak and --peak-lit appear in exactly three places here: a
+   suspended or banned account's chip, the hairline down the left of its row,
+   and the reason under the banner that explains it. The hairline is --peak, the
+   words are --peak-lit, because --peak is 3.23:1 and fails AA as text.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Supabase is not configured
+
+   Not an error state — it is the state this project is in until the keys are
+   pasted in, and the panel says which ones rather than drawing an empty table.
+   -------------------------------------------------------------------------- */
+
+.au-setup {
+  max-width: 64ch;
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid var(--lamp);
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.au-setup__note {
+  max-width: 64ch;
+  margin-top: var(--gap-sm);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------------------
+   Search
+
+   A GET form, so a search has its own address: it can be bookmarked, sent to
+   somebody and stepped back through, and it works with scripting off.
+   -------------------------------------------------------------------------- */
+
+.au-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap);
+}
+
+.au-search__field {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.au-search__label {
+  color: var(--dust);
+}
+
+.au-search__input {
+  /* Codes and addresses, so the mono — same rule as every other field in here
+     that holds something typed rather than written. */
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+}
+
+.au-search__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+/* --------------------------------------------------------------------------
+   The face
+
+   A picture if they uploaded one, their initials if they did not. Never an
+   empty circle — and never a circle, since nothing on this site is rounded.
+   -------------------------------------------------------------------------- */
+
+.au-face {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: var(--hair) solid var(--score);
+  background: var(--rack);
+  object-fit: cover;
+}
+
+.au-face--text {
+  color: var(--lamp);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.au-face--lg {
+  width: 56px;
+  height: 56px;
+}
+
+/* --------------------------------------------------------------------------
+   List rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is what
+   keeps a 360px screen scrolling down rather than sideways.
+   -------------------------------------------------------------------------- */
+
+.au-row {
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid transparent;
+}
+
+/* An account that cannot sign in. Same device the orders list uses for one
+   awaiting payment, in the colour that means "look at this". */
+.au-row[data-flag='true'] {
+  border-left-color: var(--peak);
+}
+
+.au-row__face {
+  align-self: start;
+}
+
+.au-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.au-row__name {
+  justify-self: start;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.au-row__name:hover {
+  color: var(--lamp);
+}
+
+.au-row__handle {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.au-row__mail {
+  justify-self: start;
+  color: var(--dust);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.au-row__mail:hover {
+  color: var(--lamp);
+}
+
+.au-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.au-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (min-width: 620px) {
+  .au-row {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .au-row__face {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .au-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .au-row__meta {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .au-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .au-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Chips
+
+   .ad-badge does the shape; these do the meaning. The attribute IS the state,
+   so the styling cannot drift from what the row actually says.
+   -------------------------------------------------------------------------- */
+
+.au-status[data-status='active'] {
+  border-color: color-mix(in srgb, var(--lamp) 55%, var(--score));
+  color: var(--lamp);
+}
+
+.au-status[data-status='suspended'],
+.au-status[data-status='banned'] {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+/* Banned is the harder of the two, and reads that way without a second colour. */
+.au-status[data-status='banned'] {
+  background: var(--rack);
+}
+
+.au-chip[data-tone='lamp'] {
+  border-color: color-mix(in srgb, var(--lamp) 55%, var(--score));
+  color: var(--lamp);
+}
+
+.au-chip[data-tone='warn'] {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+/* --------------------------------------------------------------------------
+   One customer — the head
+   -------------------------------------------------------------------------- */
+
+.au-head__who {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.au-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+  overflow-wrap: anywhere;
+}
+
+/* Inside .ad-banner, which already carries the red hairline. */
+.au-banner__reason {
+  color: var(--peak-lit);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* The one string you paste into a Supabase query or a support thread. One
+   click takes all of it — half a uuid is worse than none. */
+.au-id {
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Addresses
+   -------------------------------------------------------------------------- */
+
+.au-cards {
+  display: grid;
+  gap: var(--gap-sm);
+}
+
+@media (min-width: 620px) {
+  .au-cards {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+.au-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: var(--gap-sm);
+  border: var(--hair) solid var(--score);
+}
+
+.au-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+}
+
+.au-card__label {
+  color: var(--dust);
+}
+
+.au-card__body {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.au-card__meta {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Their orders, on the customer screen
+   -------------------------------------------------------------------------- */
+
+.au-order__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.au-order__when {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.au-order__total {
+  color: var(--tape);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 620px) {
+  .au-order {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: var(--gap);
+  }
+
+  .au-order__total {
+    text-align: right;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Activity
+
+   An append-only trail: no policy on the table allows an update or a delete to
+   anyone, including us, so nothing on this screen can rewrite a line of it.
+   -------------------------------------------------------------------------- */
+
+.au-log {
+  border-top: var(--hair) solid var(--score);
+}
+
+.au-log__item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 620px) {
+  .au-log__item {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: baseline;
+  }
+}
+
+.au-log__when {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.au-log__body {
+  min-width: 0;
+}
+
+.au-log__what {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.au-log__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Payments — the provider's record, never written from this screen
+   -------------------------------------------------------------------------- */
+
+.au-pays {
+  border-top: var(--hair) solid var(--score);
+}
+
+.au-pay {
+  display: grid;
+  gap: var(--gap-sm);
+  align-items: center;
+  padding: var(--gap-sm) 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.au-pay__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.au-pay__who {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  text-transform: capitalize;
+}
+
+.au-pay__txn {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+.au-pay__why {
+  color: var(--peak-lit);
+  font-size: 0.8125rem;
+}
+
+.au-pay__sum {
+  color: var(--tape);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.au-pay__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (min-width: 620px) {
+  .au-pay {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: var(--gap);
+  }
+
+  .au-pay__sum,
+  .au-pay__flags {
+    justify-content: flex-end;
+    text-align: right;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Tracking and the note
+
+   Ordinary form posts, so each panel carries its own button rather than
+   sharing the sticky save bar — two save bars stacked would be two buttons
+   claiming the same job.
+   -------------------------------------------------------------------------- */
+
+.au-track__link {
+  color: var(--lamp);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.au-track__link:hover {
+  color: var(--tape);
+}
+
+.au-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+/* --------------------------------------------------------------------------
+   Staff actions
+   -------------------------------------------------------------------------- */
+
+/* .ad-form zeroes the bottom margin of the panel inside it, because an editor
+   normally ends in the sticky save bar. These panels each carry their own
+   button instead, so the rhythm between two of them has to come back here —
+   without it the forms butt together and read as one panel. */
+.au-form {
+  margin-bottom: var(--u-half);
+}
+
+.au-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.au-acts__status {
+  margin-top: var(--gap-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard
+
+   A figure with nowhere sensible to click through to. Same box as
+   .ad-stat__link, without the hover that would promise a link.
+   -------------------------------------------------------------------------- */
+
+.au-stat {
+  display: grid;
+  gap: 6px;
+  padding: var(--gap-sm) var(--gap);
+}
+
+.au-substat {
+  padding: var(--gap) 0 10px;
+  color: var(--dust);
+}

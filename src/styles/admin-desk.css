@@ -1,0 +1,399 @@
+/* ==========================================================================
+   The desk — booking requests, blocked dates, account.
+
+   Only what admin.css does not already provide: the status tabs, the grid
+   inside .ad-row on three different lists, the not-notified warning, and the
+   hairline definition rows on one request. Same tokens, same hairlines, no new
+   colour, no radius, no shadow.
+
+   --peak and --peak-lit appear in exactly one block in this file: the warning
+   that says no email went out. The hairline is --peak, the words are
+   --peak-lit, because --peak is 3.98:1 and fails AA as text.
+   ========================================================================== */
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+/* The mono readout on the right of a panel head. */
+.desk-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* A plain sentence above the controls it explains. Prose, so it is the serif —
+   the chrome around it is the mono. */
+.bk-note,
+.bo-note {
+  max-width: 64ch;
+  margin-bottom: var(--gap-sm);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------------------
+   Status tabs
+
+   Links, not buttons: the filter is a query string, so a tab can be
+   bookmarked, opened in a new tab and stepped back through. They wrap rather
+   than scroll — five short words fit two lines at 360px.
+   -------------------------------------------------------------------------- */
+
+.bk-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: var(--u-half);
+  border: var(--hair) solid var(--score);
+}
+
+.bk-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 14px;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.bk-tab + .bk-tab {
+  border-left: var(--hair) solid var(--score);
+}
+
+.bk-tab:hover {
+  color: var(--tape);
+}
+
+.bk-tab[aria-current='page'] {
+  background: var(--rack);
+  color: var(--lamp);
+}
+
+.bk-tab__n {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--dust) 76%, var(--room));
+}
+
+.bk-tab[aria-current='page'] .bk-tab__n,
+.bk-tab:hover .bk-tab__n {
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Booking rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is what
+   keeps a 360px screen scrolling down rather than sideways.
+
+   The left hairline is transparent on every row and lamp on a new one, so a
+   new request is obvious without the rows shifting a pixel against each other.
+   -------------------------------------------------------------------------- */
+
+.bk-row {
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid transparent;
+}
+
+.bk-row[data-new='true'] {
+  border-left-color: var(--lamp);
+}
+
+.bk-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bk-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.bk-row__link:hover {
+  color: var(--lamp);
+}
+
+.bk-row__when {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.bk-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+}
+
+.bk-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.bk-row__ago {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .bk-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  /* Auto-placement does the rest: main and flags share row 1, and the warning
+     and the tools each span the full width in the order they appear — so a row
+     with no warning closes up instead of leaving a gap where it would go. */
+  .bk-row__main {
+    grid-column: 1;
+  }
+
+  .bk-row__flags {
+    grid-column: 2;
+    align-self: start;
+    justify-content: flex-end;
+  }
+
+  .bk-row__warn,
+  .bk-row .ad-row__tools {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   "No email was sent"
+
+   The one warning in the admin that is about something already broken rather
+   than something the client typed wrong, so it is the one block here allowed
+   the signal red.
+   -------------------------------------------------------------------------- */
+
+.bk-warn {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: var(--hair) solid var(--peak);
+}
+
+.bk-warn__tag {
+  color: var(--peak-lit);
+}
+
+.bk-warn__text {
+  color: var(--peak-lit);
+  font-size: 0.8125rem;
+}
+
+/* Truncated on the row; the request page prints the whole thing. */
+.bk-warn__reason {
+  color: var(--peak-lit);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* Inside .ad-banner, which already carries the red hairline. */
+.bk-banner__reason {
+  color: var(--peak-lit);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   One request
+   -------------------------------------------------------------------------- */
+
+.bk-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+.bk-lines {
+  border-top: var(--hair) solid var(--score);
+}
+
+.bk-line {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 620px) {
+  .bk-line {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: baseline;
+  }
+}
+
+.bk-line__label {
+  color: var(--dust);
+}
+
+.bk-line__value {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+.bk-line__value--mono {
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Plain text, and it stays plain: the line breaks the person typed are the only
+   formatting this ever gets. */
+.bk-notes {
+  max-width: 68ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: var(--lh-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bk-notes--empty {
+  color: var(--dust);
+}
+
+.bk-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+/* aria-pressed is the state, so it is also the selector — the styling cannot
+   drift from what a screen reader is told. */
+.bk-state[aria-pressed='true'] {
+  background: var(--rack);
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* Sits under the save bar, in its own form: a submit button inside the note
+   form would submit the note form, and a nested form is invalid HTML. */
+.bk-danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+  padding-top: var(--gap);
+}
+
+.bk-danger__text {
+  max-width: 60ch;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------------------
+   Blocked dates
+   -------------------------------------------------------------------------- */
+
+.bo-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+}
+
+.bo-group + .bo-group {
+  margin-top: var(--u-half);
+}
+
+.bo-grouphead {
+  padding-bottom: 10px;
+  color: color-mix(in srgb, var(--dust) 80%, var(--room));
+}
+
+.bo-row__date {
+  color: var(--lamp);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.06em;
+}
+
+.bo-row__day {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.bo-row__why {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+/* A day that has passed still blocks nothing. Greyed by colour rather than
+   opacity, so the text keeps its contrast ratio. */
+.bo-row[data-past='true'] .bo-row__date {
+  color: var(--dust);
+}
+
+.bo-row[data-past='true'] .bo-row__why {
+  color: var(--dust);
+}
+
+@media (min-width: 620px) {
+  .bo-row {
+    grid-template-columns: 7.5rem 7rem minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Account
+   -------------------------------------------------------------------------- */
+
+.ac-who {
+  display: grid;
+  gap: 8px;
+}
+
+.ac-who__label {
+  color: var(--dust);
+}
+
+.ac-who__value {
+  color: var(--tape);
+  font-size: var(--fs-mono);
+  overflow-wrap: anywhere;
+}
+
+.ac-who__meta {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.6875rem;
+}
+
+.ac-note {
+  max-width: 64ch;
+  color: color-mix(in srgb, var(--dust) 82%, var(--room));
+  font-size: 0.8125rem;
+}
+
+.ac-note--loud {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}

@@ -1,0 +1,258 @@
+/* ==========================================================================
+   Store — the item list, the item editor, the store page copy.
+
+   Only what admin.css does not already provide: the kind tabs, the grid inside
+   .ad-row, the "New" cluster in the page head, and the three small blocks the
+   editor adds. Same tokens, same hairlines, no new colour, no radius, no
+   shadow.
+
+   The prefix is sto-, not st-: st- is the storefront's, in src/styles/store.css.
+   Two stylesheets that never meet on a page are still two stylesheets that can
+   be read at the same time, and one namespace per surface keeps that honest.
+   ========================================================================== */
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+/* The mono readout on the right of a panel head. */
+.sto-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------------------------------
+   "New" in the page head
+
+   Three links rather than one button with a menu: the client is choosing what
+   they are making, and three words say it without anything having to open.
+   -------------------------------------------------------------------------- */
+
+.sto-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-xs) var(--gap-sm);
+}
+
+.sto-new__label {
+  color: var(--dust);
+}
+
+.sto-new__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-xs);
+}
+
+/* --------------------------------------------------------------------------
+   Kind tabs
+
+   Links, not buttons: the filter is a query string, so a tab can be
+   bookmarked, opened in a new tab and stepped back through. They wrap rather
+   than scroll — four short words fit one line at 360px.
+   -------------------------------------------------------------------------- */
+
+.sto-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: var(--u-half);
+  border: var(--hair) solid var(--score);
+}
+
+.sto-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 14px;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.sto-tab + .sto-tab {
+  border-left: var(--hair) solid var(--score);
+}
+
+.sto-tab:hover {
+  color: var(--tape);
+}
+
+.sto-tab[aria-current='page'] {
+  background: var(--rack);
+  color: var(--lamp);
+}
+
+.sto-tab__n {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--dust) 76%, var(--room));
+}
+
+.sto-tab[aria-current='page'] .sto-tab__n,
+.sto-tab:hover .sto-tab__n {
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   List rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is
+   what keeps a 360px screen scrolling down rather than sideways.
+   -------------------------------------------------------------------------- */
+
+.sto-row__art {
+  align-self: start;
+}
+
+/* The 48px frame is too small to carry the "No image yet" plate SmartImage
+   draws; the hatched frame says it on its own, and the row says it in words. */
+.sto-row__art .img__empty-label {
+  display: none;
+}
+
+.sto-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sto-row__kind {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sto-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.sto-row__link:hover {
+  color: var(--lamp);
+}
+
+.sto-row__sub {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.sto-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one number on the row anyone scans down a column, so it is the one that
+   is not dimmed. */
+.sto-row__price {
+  color: var(--tape);
+}
+
+.sto-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.sto-row__note {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .sto-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .sto-row__art {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .sto-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .sto-row__meta {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+  }
+
+  .sto-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .sto-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Editor
+   -------------------------------------------------------------------------- */
+
+.sto-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+/* The kind, once it is fixed. A value rather than a field, so it reads as a
+   fact about the item instead of a control that has stopped working. */
+.sto-readonly {
+  padding: 10px 0;
+  border-top: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A consequence the client should read before they save — an exclusive that
+   never comes off sale. Prose, so it is the serif; the hairline is the lamp
+   because it is a note and not a fault. */
+.sto-note {
+  max-width: 60ch;
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid var(--lamp);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* Sits under the save bar, in its own form: a submit button inside the editor
+   form would submit the editor form, and a nested form is invalid HTML. */
+.sto-danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+  padding-top: var(--gap);
+}
+
+.sto-danger__text {
+  max-width: 60ch;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}

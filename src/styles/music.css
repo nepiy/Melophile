@@ -1,0 +1,358 @@
+/* ==========================================================================
+   /music — the catalogue.
+
+   Three rack units: the head, the control strip, the grid of sleeves. Plus the
+   detail panel, which is the same rack drawn inside a dialog.
+
+   Colour comes only from tokens. Surfaces separate by hairline, never by lift —
+   there is not one shadow in this file. Nothing is rounded. The sleeve card
+   itself lives in home.css (.rel) and is reused verbatim, so a release looks
+   identical on the home page and here.
+   ========================================================================== */
+
+/* The nav is fixed, so it is out of flow and the first section has to clear it
+   on its own. A rack unit and a half reads as deliberate air above the channel
+   number rather than as a bar sitting on the heading. */
+.mus {
+  padding-top: calc(var(--u2) + var(--u-half));
+}
+
+/* --------------------------------------------------------------------------
+   Control strip — legends left, readout right, like a channel strip.
+   -------------------------------------------------------------------------- */
+
+.mus-flt {
+  /* One control height for every button and select in the strip. Matched here
+     rather than by hand-tuned padding, so the row cannot end up 2px ragged. */
+  --ctl: 34px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+  padding-block: var(--gap-sm);
+  border-block: var(--hair) solid var(--score);
+}
+
+.mus-flt__group {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  min-width: 0;
+}
+
+.mus-flt__legend {
+  white-space: nowrap;
+}
+
+/* The segmented set is one hairline box whose cells are divided by one hairline
+   each — never two side by side, which would read as a 2px rule. */
+.mus-flt__set {
+  display: flex;
+  min-height: var(--ctl);
+  border: var(--hair) solid var(--score);
+}
+
+.mus-flt__btn {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 14px;
+  border-left: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--dust);
+  transition:
+    color var(--t-quick) var(--ease-gear),
+    background-color var(--t-quick) var(--ease-gear);
+}
+
+.mus-flt__btn:first-child {
+  border-left: 0;
+}
+
+.mus-flt__btn:hover {
+  color: var(--tape);
+}
+
+/* Lit rather than filled. The wash is the amber token at its own 14% alpha, so
+   the live cell reads as a lamp behind a legend — and the one genuinely filled
+   button on the site stays reserved for booking the studio. */
+.mus-flt__btn[aria-pressed='true'] {
+  color: var(--lamp);
+  background: var(--lamp-ghost);
+}
+
+/* Native selects: keyboard support, mobile pickers and 360px all for free.
+   The wrap carries the live colour so the box and its chevron agree. */
+.mus-flt__select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--tape);
+}
+
+.mus-flt__select-wrap[data-active='true'] {
+  color: var(--lamp);
+}
+
+.mus-flt__select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: var(--ctl);
+  /* Room on the right for the chevron, which is not part of the text box. */
+  padding: 6px 32px 6px 12px;
+  border: var(--hair) solid var(--score);
+  background: var(--room);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.mus-flt__select-wrap[data-active='true'] .mus-flt__select {
+  border-color: var(--lamp);
+}
+
+/* The popup is drawn by the platform, so its colours are stated outright
+   instead of inherited from a translucent parent. */
+.mus-flt__select option {
+  background: var(--room);
+  color: var(--tape);
+}
+
+.mus-flt__chev {
+  position: absolute;
+  right: 12px;
+  width: 10px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.mus-flt__end {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  margin-left: auto;
+}
+
+.mus-flt__count {
+  color: var(--dust);
+  white-space: nowrap;
+}
+
+/* Under 560px every control gets its own line and the selects go full width.
+   Nothing is hidden or dropped to fit: the strip just stacks. */
+@media (max-width: 560px) {
+  .mus-flt {
+    gap: var(--gap);
+    padding-block: var(--gap);
+  }
+
+  .mus-flt__group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .mus-flt__set {
+    align-self: start;
+  }
+
+  .mus-flt__btn {
+    padding-inline: 12px;
+  }
+
+  .mus-flt__end {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The grid — three across, and the art is allowed to be big.
+   -------------------------------------------------------------------------- */
+
+.mus-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--u) var(--gap);
+  margin-top: var(--u-half);
+}
+
+.mus-grid__item {
+  min-width: 0;
+}
+
+@media (min-width: 560px) {
+  .mus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .mus-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* A filter that matches nothing is a dead end unless it comes with the way
+   out, so the reset lives inside the message. */
+.mus-none {
+  margin-top: var(--u-half);
+}
+
+.mus-none__reset {
+  margin-top: var(--gap);
+}
+
+/* --------------------------------------------------------------------------
+   Detail panel — artwork left, the record's own manual right.
+   The dialog primitive supplies the panel, the veil and the close tab; below
+   the tab this is the same hairline-divided stack as the rest of the site.
+   -------------------------------------------------------------------------- */
+
+.mus-rd {
+  display: grid;
+  gap: var(--gap);
+  /* No top padding: the sticky close tab already holds a row open above. */
+  padding: 0 var(--gap) var(--u-half);
+}
+
+@media (min-width: 880px) {
+  .mus-rd {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1fr);
+    gap: var(--u-half);
+    padding: 0 var(--u-half) var(--u-half);
+  }
+
+  /* The sleeve holds while a long tracklist scrolls past it. The panel is the
+     scroll container, so this needs nothing but a start alignment. */
+  .mus-rd__art {
+    position: sticky;
+    top: var(--gap-sm);
+    align-self: start;
+  }
+}
+
+.mus-rd__body {
+  min-width: 0;
+}
+
+/* The catalogue number is the one amber thing in the panel — it is the record's
+   serial, and treating it as such is why the rest can stay quiet. */
+.mus-rd__cat {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+}
+
+.mus-rd__title {
+  margin-top: 8px;
+  font-size: var(--fs-h2);
+  color: var(--tape);
+}
+
+.mus-rd__by {
+  margin-top: 8px;
+  color: var(--tape);
+  font-size: var(--fs-body-lg);
+  font-variation-settings: var(--body-axes-lg);
+}
+
+.mus-rd__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mus-rd__sep {
+  color: var(--score);
+}
+
+/* Every block after the first is a rack unit: hairline above, one gap below. */
+.mus-rd__sec {
+  margin-top: var(--u-half);
+  padding-top: var(--u-half);
+  border-top: var(--hair) solid var(--score);
+}
+
+.mus-rd__sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+}
+
+.mus-rd__runtime {
+  color: var(--dust);
+}
+
+.mus-rd__feat {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.mus-rd__feat-role {
+  color: var(--dust);
+}
+
+/* Tracklist. Two-digit numbers, titles that wrap, durations right-aligned in
+   tabular figures so the column is a column and not a ragged edge. */
+.mus-rd__trk {
+  display: grid;
+  margin-top: 14px;
+  border-top: var(--hair) solid var(--score);
+}
+
+.mus-rd__trk li {
+  display: grid;
+  grid-template-columns: 2.6em minmax(0, 1fr) auto;
+  gap: var(--gap-sm);
+  align-items: baseline;
+  padding-block: 11px;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.mus-rd__trk-n {
+  color: var(--dust);
+}
+
+.mus-rd__trk-title {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.mus-rd__trk-dur {
+  color: var(--dust);
+  text-align: right;
+}
+
+.mus-rd__credits {
+  margin-top: 12px;
+  font-size: var(--fs-small);
+}
+
+.mus-rd__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: 14px;
+}

@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# Local database + uploaded media are content, not code.
+# Back them up by copying the folders; never commit them.
+data/
+public/uploads/*
+!public/uploads/.gitkeep
+
+.env
+.env.local
+.env*.local
+.DS_Store
+
+.vscode/

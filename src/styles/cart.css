@@ -1,0 +1,900 @@
+/* ==========================================================================
+   /cart, /checkout and /order/<reference>.
+
+   The same rack as the rest of the site: hairlines separate everything, no
+   shadows, nothing rounded, every colour a token. --peak and --peak-lit appear
+   only where something is wrong.
+
+   All chrome is the utility mono with tabular numerals — prices, quantities,
+   totals, labels, buttons — so a column of money lines up on the decimal and
+   a total never jitters as it updates. Prose is the serif; headings are the
+   display face. That split is why operating this site feels like operating a
+   device rather than reading a page.
+   ========================================================================== */
+
+/* The nav is fixed and out of flow, so the first section clears it itself.
+   Same measure /store uses, so the two pages start on the same line. */
+.bsk-sec,
+.cko-sec,
+.ord-sec {
+  padding-top: calc(var(--u2) + var(--u-half));
+}
+
+/* --------------------------------------------------------------------------
+   Shared: an alert panel. Blocking problems only — a per-line warning is a
+   quieter thing and lives further down.
+   -------------------------------------------------------------------------- */
+
+.bsk__alert,
+.cko__alert {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--gap);
+  padding: 14px 16px;
+  background: var(--rack);
+  border: var(--hair) solid var(--peak);
+}
+
+.bsk__alert-label,
+.cko__alert-label {
+  color: var(--peak-lit);
+}
+
+/* --peak is 3.23:1 and fails AA as text, so it only ever carries the
+   hairline. --peak-lit is the red that clears AA, so it carries the words. */
+.bsk__alert-text,
+.cko__alert-text {
+  max-width: 62ch;
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.bsk__alert-list {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.cko__alert-go {
+  justify-self: start;
+  margin-top: 6px;
+}
+
+/* Pre-mount and in-flight states. The basket lives in localStorage, which the
+   server cannot see, so there is always one frame with nothing in it. */
+.bsk__wait,
+.cko__wait {
+  padding: var(--u-half) 0;
+  color: var(--dust);
+}
+
+/* --------------------------------------------------------------------------
+   /cart
+   -------------------------------------------------------------------------- */
+
+/* Coming back from an abandoned payment page is a normal thing to do. Stated
+   in --dust, not in red: nothing went wrong and nothing was lost. */
+.bsk__notice {
+  margin-bottom: var(--gap);
+  padding: 12px 14px;
+  border-left: var(--hair) solid var(--score);
+  color: var(--dust);
+}
+
+.bsk__empty-note {
+  margin-bottom: var(--gap-sm);
+  color: var(--dust);
+}
+
+.bsk__empty-go,
+.cko__empty-go {
+  margin-top: var(--gap);
+}
+
+.bsk__lines {
+  list-style: none;
+  border-top: var(--hair) solid var(--score);
+}
+
+/* Areas rather than columns, because the row reflows completely between a
+   360px phone and a desktop: stacked there, four columns here. */
+.bsk__line {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-areas:
+    'thumb body'
+    'ctrl ctrl'
+    'issue issue';
+  gap: var(--gap-sm) 14px;
+  padding: var(--gap) 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 760px) {
+  .bsk__line {
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'thumb body ctrl'
+      'thumb issue issue';
+    align-items: start;
+  }
+}
+
+.bsk__thumb {
+  position: relative;
+  grid-area: thumb;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+/* No photograph is a designed frame, never a broken icon and never a void. */
+.bsk__thumb--empty {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 9px,
+    color-mix(in srgb, var(--score) 60%, transparent) 9px 10px
+  );
+}
+
+.bsk__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bsk__body {
+  grid-area: body;
+  min-width: 0;
+}
+
+.bsk__title {
+  font-family: var(--face-display);
+  font-variation-settings: var(--head-axes);
+  font-size: var(--fs-h3);
+  line-height: 1.25;
+  color: var(--tape);
+}
+
+.bsk__link {
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.bsk__link:hover {
+  color: var(--lamp);
+}
+
+.bsk__variant {
+  margin-top: 6px;
+  color: var(--lamp);
+}
+
+.bsk__sub {
+  margin-top: 4px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.bsk__unit {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+.bsk__ctrl {
+  grid-area: ctrl;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+}
+
+@media (min-width: 760px) {
+  .bsk__ctrl {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: var(--gap-sm);
+  }
+}
+
+/* Stepper. A real number input in the middle, so the value can be typed and is
+   announced on change; the buttons are for thumbs. */
+.bsk__qty {
+  display: inline-flex;
+  align-items: stretch;
+  border: var(--hair) solid var(--score);
+}
+
+.bsk__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-height: 44px;
+  font-family: var(--face-mono);
+  font-size: 1rem;
+  color: var(--dust);
+  background: transparent;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.bsk__step:hover:not(:disabled) {
+  color: var(--lamp);
+}
+
+.bsk__step:disabled {
+  color: color-mix(in srgb, var(--dust) 45%, var(--room));
+  cursor: not-allowed;
+}
+
+/* Inward, so a 2px ring does not sit on the neighbouring hairline and read as
+   a broken border. */
+.bsk__step:focus-visible {
+  outline-offset: -2px;
+}
+
+.bsk__num {
+  width: 3.4em;
+  padding: 10px 4px;
+  border-inline: var(--hair) solid var(--score);
+  background: transparent;
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--tape);
+  /* Our own steppers are either side of it; the browser's are noise. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.bsk__num::-webkit-outer-spin-button,
+.bsk__num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bsk__total {
+  font-size: var(--fs-body);
+  color: var(--tape);
+}
+
+.bsk__gone {
+  color: var(--peak-lit);
+}
+
+.bsk__remove {
+  padding: 6px 0;
+  background: transparent;
+  color: var(--dust);
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+  text-decoration-thickness: var(--hair);
+  text-decoration-color: color-mix(in srgb, var(--dust) 45%, transparent);
+  transition:
+    color var(--t-quick) var(--ease-gear),
+    text-decoration-color var(--t-quick) var(--ease-gear);
+}
+
+.bsk__remove:hover {
+  color: var(--lamp);
+  text-decoration-color: var(--lamp);
+}
+
+/* A warning about this line, not a blocker. Same red grammar as a form field:
+   --peak draws the rule, --peak-lit says the words. */
+.bsk__issue {
+  grid-area: issue;
+  padding-left: 11px;
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.bsk__line--gone .bsk__title {
+  color: var(--dust);
+}
+
+/* ---- totals ---- */
+
+.bsk__foot {
+  display: grid;
+  gap: var(--gap);
+  padding-top: var(--gap);
+}
+
+@media (min-width: 760px) {
+  .bsk__foot {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--u-half);
+  }
+}
+
+.bsk__sums {
+  min-width: 0;
+}
+
+/* Reserves its own line whether or not it has anything to say, so the totals
+   below do not jump every time a quantity changes. */
+.bsk__busy {
+  min-height: 1.4em;
+  color: var(--lamp);
+}
+
+.bsk__rows {
+  display: grid;
+  gap: 10px;
+  max-width: 32rem;
+}
+
+.bsk__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+
+.bsk__row--total {
+  padding-top: 10px;
+  border-top: var(--hair) solid var(--score);
+}
+
+.bsk__v {
+  color: var(--tape);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* "No postage" is a sentence, not an amount, so it is not right-aligned type
+   pretending to be a number. */
+.bsk__v-note {
+  color: var(--dust);
+}
+
+.bsk__v--total {
+  font-size: var(--fs-h3);
+  color: var(--lamp);
+}
+
+.bsk__note {
+  max-width: 52ch;
+  margin-top: var(--gap-sm);
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.bsk__go {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+@media (max-width: 420px) {
+  .bsk__go .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   /checkout
+   -------------------------------------------------------------------------- */
+
+.cko {
+  display: grid;
+  gap: var(--u-half);
+  align-items: start;
+}
+
+/* The summary sits beside the form only when there is room for both to be
+   read at once. Below that it goes under, where it is still in the flow. */
+@media (min-width: 960px) {
+  .cko {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
+    gap: var(--u-half);
+  }
+}
+
+.cko__grid {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 620px) {
+  .cko__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cko__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.cko__field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.cko__label {
+  color: var(--dust);
+}
+
+.cko__box {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-body);
+  font-size: var(--fs-body);
+  font-variation-settings: var(--body-axes);
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.cko__box--mono {
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cko__box--area {
+  min-height: 0;
+  resize: vertical;
+  line-height: var(--lh-body);
+}
+
+.cko__box:hover {
+  border-color: color-mix(in srgb, var(--score) 55%, var(--dust));
+}
+
+.cko__box::placeholder {
+  color: color-mix(in srgb, var(--dust) 70%, var(--rack));
+}
+
+/* An errored field is marked on the box as well as under it, so the state is
+   visible without reading — and it is a hairline, never a fill. */
+.cko__box[aria-invalid='true'] {
+  border-color: var(--peak);
+}
+
+.cko__hint {
+  color: var(--dust);
+}
+
+.cko__err {
+  padding-left: 11px;
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.cko__ship-note {
+  max-width: 56ch;
+  margin-top: var(--gap-sm);
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.cko__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+  margin-top: var(--u-half);
+  padding-top: var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.cko__note {
+  flex: 1 1 22ch;
+  max-width: 52ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+@media (max-width: 420px) {
+  .cko__foot .btn {
+    width: 100%;
+  }
+}
+
+/* ---- the summary ---- */
+
+.cko__sum {
+  display: grid;
+  gap: var(--gap-sm);
+  align-content: start;
+  padding: var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+@media (min-width: 960px) {
+  .cko__sum {
+    position: sticky;
+    top: calc(var(--u) + var(--gap));
+  }
+}
+
+.cko__sum-head {
+  color: var(--dust);
+}
+
+.cko__sum-busy {
+  min-height: 1.4em;
+  color: var(--lamp);
+}
+
+.cko__sum-lines {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding-bottom: var(--gap-sm);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.cko__sum-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--gap-sm);
+}
+
+.cko__sum-title {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+}
+
+.cko__sum-variant {
+  color: var(--dust);
+}
+
+.cko__sum-qty {
+  color: var(--dust);
+}
+
+.cko__sum-money {
+  color: var(--tape);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cko__sum-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.cko__sum-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  color: var(--tape);
+}
+
+.cko__sum-row dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cko__sum-row--total {
+  padding-top: 8px;
+  border-top: var(--hair) solid var(--score);
+}
+
+.cko__sum-total {
+  font-size: var(--fs-h3);
+  color: var(--lamp);
+}
+
+.cko__sum-back {
+  justify-self: start;
+}
+
+/* ---- leaving for the payment page ---- */
+
+.cko__leaving {
+  display: grid;
+  gap: 8px;
+  padding: var(--u-half) var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+.cko__leaving-label {
+  color: var(--lamp);
+}
+
+.cko__leaving-text {
+  font-family: var(--face-display);
+  font-variation-settings: var(--head-axes);
+  font-size: var(--fs-h3);
+  color: var(--tape);
+}
+
+.cko__leaving-note {
+  max-width: 60ch;
+  color: var(--dust);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   /order/<reference>
+   -------------------------------------------------------------------------- */
+
+.ord {
+  display: grid;
+  gap: var(--u-half);
+}
+
+/* One engraved plate, three cells, drawn as a single hairline lattice so no
+   rule is ever doubled into 2px. */
+.ord__plate {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: var(--hair) solid var(--score);
+  border-left: var(--hair) solid var(--score);
+}
+
+@media (min-width: 720px) {
+  .ord__plate {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ord__plate-cell {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+  padding: var(--gap);
+  border-right: var(--hair) solid var(--score);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ord__k {
+  color: var(--dust);
+}
+
+/* They will read this down a phone, so it is the largest mono on the site and
+   it is tracked out enough to be dictated character by character. */
+.ord__ref {
+  font-size: clamp(1.375rem, 5vw, 1.875rem);
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: var(--lamp);
+  overflow-wrap: anywhere;
+}
+
+.ord__status {
+  font-size: var(--fs-body);
+  color: var(--dust);
+}
+
+.ord__status[data-paid='true'] {
+  color: var(--lamp);
+}
+
+.ord__email {
+  color: var(--tape);
+  overflow-wrap: anywhere;
+}
+
+.ord__pending {
+  display: grid;
+  gap: 8px;
+  padding: var(--gap);
+  border-left: var(--hair) solid var(--lamp);
+  background: var(--lamp-ghost);
+}
+
+.ord__pending-label {
+  color: var(--lamp);
+}
+
+.ord__pending-text {
+  max-width: 66ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.ord__lines {
+  list-style: none;
+  border-top: var(--hair) solid var(--score);
+}
+
+.ord__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: var(--gap-sm) var(--gap);
+  padding: var(--gap) 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ord__line-body {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.ord__line-title {
+  color: var(--tape);
+  font-size: var(--fs-body);
+  line-height: 1.35;
+}
+
+.ord__line-variant {
+  color: var(--dust);
+}
+
+.ord__line-unit {
+  color: var(--dust);
+}
+
+/* Only ever rendered on a paid order — the URL is not even queried otherwise. */
+.ord__dl {
+  margin-top: 4px;
+}
+
+.ord__line-qty {
+  color: var(--dust);
+  font-variant-numeric: tabular-nums;
+}
+
+.ord__line-money {
+  color: var(--tape);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ord__rows {
+  display: grid;
+  gap: 10px;
+  max-width: 32rem;
+}
+
+.ord__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  color: var(--tape);
+}
+
+.ord__row dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ord__row--total {
+  padding-top: 10px;
+  border-top: var(--hair) solid var(--score);
+}
+
+.ord__total {
+  font-size: var(--fs-h3);
+  color: var(--lamp);
+}
+
+.ord__ship {
+  display: grid;
+  gap: 10px;
+}
+
+.ord__ship-lines {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.ord__next {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: var(--gap);
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+}
+
+.ord__next-text {
+  max-width: 66ch;
+  color: var(--tape);
+  line-height: var(--lh-body);
+}
+
+.ord__next-note {
+  color: var(--dust);
+}
+
+.ord__go {
+  margin-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   The nav's basket link.
+
+   Renders nothing until it has read localStorage, so there is no count to
+   mismatch between the server's render and the browser's first pass.
+   -------------------------------------------------------------------------- */
+
+.cbg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--tape);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.cbg:hover {
+  color: var(--lamp);
+}
+
+.cbg__word {
+  color: inherit;
+}
+
+/* A count in a hairline box, not a filled dot: this site separates by rule,
+   never by blob. It holds its width at one and two digits so the nav does not
+   reflow when a second item goes in. */
+.cbg__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 3px 5px;
+  border: var(--hair) solid var(--score);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--dust);
+  transition:
+    border-color var(--t-quick) var(--ease-gear),
+    color var(--t-quick) var(--ease-gear);
+}
+
+.cbg[data-filled='true'] .cbg__n {
+  border-color: color-mix(in srgb, var(--lamp) 40%, var(--score));
+  background: var(--lamp-ghost);
+  color: var(--lamp);
+}
+
+.cbg:hover .cbg__n {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — the site-wide contract. The tokens already collapse every
+   duration; this makes sure nothing here transitions on its own terms.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bsk__link,
+  .bsk__step,
+  .bsk__remove,
+  .cko__box,
+  .cbg,
+  .cbg__n {
+    transition: none;
+  }
+}

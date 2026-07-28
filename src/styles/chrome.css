@@ -1,0 +1,1028 @@
+/* ==========================================================================
+   Chrome — nav, footer, channel strip, section heads, buttons, reveals,
+   dialogs, images, prose. Everything shared by more than one page.
+   No shadows anywhere: surfaces separate by hairline.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Page frame
+   -------------------------------------------------------------------------- */
+
+/* No padding here: the strip inset lives in --content-inset, applied by the
+   shells themselves. Padding on this wrapper would shift the centred max-width
+   container and break alignment with the fixed nav at wide viewports. */
+.page {
+  min-width: 0;
+}
+
+.sec {
+  position: relative;
+  border-top: var(--hair) solid var(--score);
+  padding-block: var(--u2);
+}
+
+.sec:first-of-type {
+  border-top: 0;
+}
+
+.sec--tight {
+  padding-block: var(--u);
+}
+
+/* --------------------------------------------------------------------------
+   Nav
+   -------------------------------------------------------------------------- */
+
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: var(--z-nav);
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  max-width: var(--max);
+  margin-inline: auto;
+  /* Same left inset as every shell, so the logo sits directly above the
+     wordmark's first letter at every viewport width. */
+  padding: 18px var(--pad-x) 18px var(--content-inset);
+  transition: background-color var(--t-ease) var(--ease-gear);
+}
+
+.nav[data-lifted='true'] .nav__inner {
+  background: var(--room-veil);
+  backdrop-filter: blur(10px);
+}
+
+.nav__rule {
+  height: var(--hair);
+  background: var(--score);
+  opacity: 0;
+  transition: opacity var(--t-ease) var(--ease-gear);
+}
+
+.nav[data-lifted='true'] .nav__rule {
+  opacity: 1;
+}
+
+.nav__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav__logo-text {
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 112,
+    'wght' 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.1em;
+  color: var(--tape);
+}
+
+.nav__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--dust);
+}
+
+.nav__rec-dot {
+  width: 6px;
+  height: 6px;
+  /* The only rounded thing on the site. */
+  border-radius: 50%;
+  background: var(--peak);
+  animation: rec-breathe 1100ms ease-in-out infinite;
+}
+
+@keyframes rec-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__rec-dot {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+.nav__menu {
+  display: block;
+}
+
+.nav__list {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 30px);
+}
+
+.nav__link {
+  position: relative;
+  display: inline-block;
+  padding: 6px 2px;
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.nav__link::after {
+  content: '';
+  position: absolute;
+  inset: auto 2px 0 2px;
+  height: var(--hair);
+  background: var(--lamp);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t-quick) var(--ease-gear);
+}
+
+.nav__link:hover,
+.nav__link[aria-current='page'] {
+  color: var(--tape);
+}
+
+.nav__link:hover::after,
+.nav__link[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+.nav__toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+}
+
+.nav__toggle-bars {
+  display: grid;
+  gap: 3px;
+  width: 14px;
+}
+
+.nav__toggle-bars span {
+  height: var(--hair);
+  background: currentColor;
+  transition: transform var(--t-quick) var(--ease-gear);
+}
+
+.nav[data-open='true'] .nav__toggle-bars span:first-child {
+  transform: translateY(2px) rotate(9deg);
+}
+
+.nav[data-open='true'] .nav__toggle-bars span:last-child {
+  transform: translateY(-2px) rotate(-9deg);
+}
+
+@media (max-width: 860px) {
+  .nav__toggle {
+    display: inline-flex;
+  }
+
+  .nav__menu {
+    position: absolute;
+    inset: 100% 0 auto 0;
+    background: var(--room);
+    border-block: var(--hair) solid var(--score);
+    /* Collapsed by scale, not by height: no layout thrash on open. */
+    transform: scaleY(0);
+    transform-origin: top;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform var(--t-ease) var(--ease-gear),
+      opacity var(--t-quick) linear;
+  }
+
+  .nav[data-open='true'] .nav__menu {
+    transform: scaleY(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav__list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--gap-sm) var(--pad-x) var(--gap);
+  }
+
+  .nav__list > li + li {
+    border-top: var(--hair) solid var(--score);
+  }
+
+  .nav__link {
+    padding: 16px 0;
+  }
+
+  .nav__book {
+    padding-top: var(--gap-sm);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Buttons — chrome is mono, because operating the site should feel like
+   operating a device.
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--tape);
+  background: transparent;
+  transition:
+    border-color var(--t-quick) var(--ease-gear),
+    color var(--t-quick) var(--ease-gear),
+    transform var(--t-flick) var(--ease-transient);
+}
+
+.btn:hover {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* The one filled button on the site. Reserved for booking the studio —
+   the primary audience's primary action. */
+.btn--solid {
+  background: var(--lamp);
+  border-color: var(--lamp);
+  color: var(--room);
+}
+
+.btn--solid:hover {
+  background: color-mix(in srgb, var(--lamp) 84%, var(--tape));
+  border-color: color-mix(in srgb, var(--lamp) 84%, var(--tape));
+  color: var(--room);
+}
+
+.btn--ghost {
+  padding: 10px 16px;
+  color: var(--dust);
+}
+
+.btn--ghost:hover {
+  color: var(--lamp);
+}
+
+.btn--sm {
+  padding: 9px 14px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  border-color: var(--score);
+  color: var(--tape);
+}
+
+/* Text link with a travelling arrow — used for "See all music". */
+.arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--tape);
+  padding: 6px 0;
+}
+
+.arrow-link__line {
+  display: block;
+  width: 28px;
+  height: var(--hair);
+  background: currentColor;
+  transition: width var(--t-quick) var(--ease-gear);
+}
+
+.arrow-link:hover {
+  color: var(--lamp);
+}
+
+.arrow-link:hover .arrow-link__line {
+  width: 44px;
+}
+
+/* --------------------------------------------------------------------------
+   Left channel strip — a fader whose cap is the scroll position
+   -------------------------------------------------------------------------- */
+
+.strip {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .strip {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    display: block;
+    width: var(--strip);
+    pointer-events: none;
+  }
+
+  .strip__rule {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: var(--hair);
+    background: var(--score);
+  }
+
+  .strip__scale {
+    position: absolute;
+    inset: 12vh 0 12vh auto;
+    width: 100%;
+  }
+
+  .strip__tick {
+    position: absolute;
+    right: 0;
+    width: 8px;
+    height: var(--hair);
+    background: var(--score);
+  }
+
+  .strip__tick[data-major='true'] {
+    width: 15px;
+    background: color-mix(in srgb, var(--score) 45%, var(--dust));
+  }
+
+  /* `top` is set inline as a percentage of .strip__scale, so the cap travels
+     exactly the run the ticks mark out. The translate centres it on its value. */
+  .strip__cap {
+    position: absolute;
+    right: -3px;
+    width: 13px;
+    height: 3px;
+    background: var(--lamp);
+    transform: translateY(-50%);
+  }
+
+  .strip__label {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    color: color-mix(in srgb, var(--dust) 70%, var(--room));
+    font-size: 0.625rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Section heads
+   -------------------------------------------------------------------------- */
+
+.sec__head {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+  align-items: start;
+  margin-bottom: var(--u);
+}
+
+@media (min-width: 880px) {
+  .sec__head {
+    grid-template-columns: 148px minmax(0, 1fr) auto;
+    gap: var(--gap);
+  }
+}
+
+.sec__strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.sec__chan {
+  color: var(--lamp);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sec__strip-rule {
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+  min-width: 14px;
+}
+
+.sec__strip-label {
+  white-space: nowrap;
+}
+
+@media (min-width: 880px) {
+  .sec__strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sec__strip-rule {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.sec__heading {
+  font-size: var(--fs-h2);
+  color: var(--tape);
+}
+
+.sec__intro {
+  max-width: 52ch;
+  margin-top: 14px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.sec__aside {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Reveal — triggered, never scroll-hijacked
+   -------------------------------------------------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity var(--t-ease) linear,
+    transform var(--t-ease) var(--ease-gear);
+  transition-delay: calc(var(--reveal-i, 0) * 70ms);
+  will-change: opacity, transform;
+}
+
+.reveal[data-shown='true'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: opacity 1ms linear;
+    transition-delay: 0ms;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Images
+   -------------------------------------------------------------------------- */
+
+.img {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  aspect-ratio: 1;
+}
+
+.img__el {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Missing artwork is a designed frame with an invitation in it — never a
+   broken icon, never a grey void. */
+.img--empty {
+  display: grid;
+  place-items: center;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 9px,
+    color-mix(in srgb, var(--score) 60%, transparent) 9px 10px
+  );
+}
+
+.img__empty-label {
+  padding: 6px 10px;
+  background: var(--room);
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+}
+
+/* --------------------------------------------------------------------------
+   Dialog — used by /music and /artists
+   -------------------------------------------------------------------------- */
+
+.dlg {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  padding: var(--gap);
+}
+
+.dlg__veil {
+  position: absolute;
+  inset: 0;
+  background: rgb(8 6 5 / 0.82);
+  backdrop-filter: blur(6px);
+  animation: veil-in var(--t-ease) linear;
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dlg__panel {
+  position: relative;
+  width: min(1000px, 100%);
+  max-height: min(88dvh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--room);
+  border: var(--hair) solid var(--score);
+  animation: panel-in var(--t-ease) var(--ease-gear);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlg__veil,
+  .dlg__panel {
+    animation: none;
+  }
+}
+
+/* Sticks to the top of the panel's own scroll area, so the way out stays
+   reachable however long the content is. */
+.dlg__bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--room);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.dlg__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  color: var(--dust);
+  border-left: var(--hair) solid var(--score);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.dlg__close:hover {
+  color: var(--lamp);
+}
+
+/* On a phone this is a full-screen sheet, not a cramped centred box. */
+@media (max-width: 720px) {
+  .dlg {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .dlg__panel {
+    width: 100%;
+    max-height: none;
+    height: 100dvh;
+    border: 0;
+    animation-name: sheet-in;
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translate3d(0, 3%, 0);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Prose — the serif, at a real measure
+   -------------------------------------------------------------------------- */
+
+.prose {
+  max-width: var(--measure);
+  color: var(--tape);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.prose--story {
+  max-width: var(--measure-wide);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-prose);
+  font-variation-settings: var(--body-axes-lg);
+}
+
+.prose > * + * {
+  margin-top: 1.1em;
+}
+
+.prose h2 {
+  margin-top: 2em;
+  font-size: var(--fs-h3);
+  font-variation-settings:
+    'wdth' 100,
+    'wght' 600;
+  letter-spacing: 0.01em;
+}
+
+.prose h3 {
+  margin-top: 1.8em;
+  font-size: 1rem;
+  color: var(--dust);
+  font-variation-settings:
+    'wdth' 100,
+    'wght' 600;
+}
+
+.prose code {
+  padding: 2px 6px;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  font-size: 0.9em;
+  color: var(--lamp);
+}
+
+.prose-quote {
+  padding-left: var(--gap);
+  border-left: var(--hair) solid var(--lamp);
+  color: var(--dust);
+  font-style: italic;
+}
+
+.prose-rule {
+  height: var(--hair);
+  background: var(--score);
+  margin-block: 2em;
+}
+
+.prose-list {
+  display: grid;
+  gap: 0.6em;
+  padding-left: 0;
+}
+
+.prose-list li {
+  position: relative;
+  padding-left: 1.6em;
+}
+
+.prose-list:not(.prose-list--ordered) li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 10px;
+  height: var(--hair);
+  background: var(--lamp);
+}
+
+.prose-list--ordered li {
+  display: grid;
+  grid-template-columns: 2.4em 1fr;
+  padding-left: 0;
+}
+
+.prose-list__n {
+  color: var(--lamp);
+  padding-top: 0.24em;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.foot {
+  margin-top: var(--u2);
+}
+
+.foot__rule {
+  height: var(--hair);
+  background: var(--score);
+}
+
+.foot__inner {
+  display: grid;
+  gap: var(--u-half);
+  padding-block: var(--u);
+}
+
+@media (min-width: 880px) {
+  .foot__inner {
+    grid-template-columns: minmax(0, 1.4fr) auto auto;
+    gap: var(--u2);
+    align-items: start;
+  }
+}
+
+.foot__mark {
+  display: block;
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 118,
+    'wght' 700;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  letter-spacing: 0.04em;
+  color: var(--tape);
+}
+
+.foot__text {
+  max-width: 46ch;
+  margin-top: 12px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.foot__nav ul,
+.foot__social ul {
+  display: grid;
+  gap: 10px;
+}
+
+.foot__link {
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.foot__link:hover {
+  color: var(--lamp);
+}
+
+.foot__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  grid-column: 1 / -1;
+  padding-top: var(--u-half);
+  border-top: var(--hair) solid var(--score);
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------------------------------
+   Empty states — an invitation to act, not "No data"
+   -------------------------------------------------------------------------- */
+
+.empty {
+  padding: var(--u2) var(--gap);
+  border: var(--hair) dashed var(--score);
+  text-align: center;
+}
+
+.empty__title {
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+  font-size: var(--fs-h3);
+  color: var(--tape);
+}
+
+.empty__text {
+  max-width: 44ch;
+  margin: 12px auto 0;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   404
+   -------------------------------------------------------------------------- */
+
+.nf__code {
+  color: var(--dust);
+  letter-spacing: 0.12em;
+}
+
+.nf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+  margin-top: var(--u-half);
+}
+
+/* ==========================================================================
+   Shared content furniture.
+
+   These belong here rather than in a page stylesheet because the components
+   that render them (ReleaseCard, ContactDetails, ServiceIcon) are reused across
+   pages, and CSS imported by one page is not loaded on another.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Release card — shared with /music
+   -------------------------------------------------------------------------- */
+
+.rel {
+  display: block;
+  width: 100%;
+  background: none;
+  color: inherit;
+}
+
+.rel__art {
+  aspect-ratio: 1;
+  /* Artwork carries the weight, so the frame does nothing but hold a hairline. */
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.rel .img__el {
+  transition:
+    transform var(--t-ease) var(--ease-gear),
+    filter var(--t-ease) var(--ease-gear);
+  /* Held slightly back so the palette reads as one piece across a grid of
+     sleeves the label did not design. Full colour on hover. */
+  filter: saturate(0.82) brightness(0.94);
+}
+
+.rel:hover .img__el,
+.rel:focus-visible .img__el {
+  transform: scale(1.028);
+  filter: saturate(1) brightness(1);
+}
+
+.rel:hover .rel__art {
+  border-color: color-mix(in srgb, var(--score) 40%, var(--lamp));
+}
+
+.rel__meta {
+  padding-top: 14px;
+}
+
+.rel__cat {
+  display: block;
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+}
+
+.rel__title {
+  margin-top: 6px;
+  font-size: 1.0625rem;
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+  color: var(--tape);
+  letter-spacing: 0;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.rel:hover .rel__title {
+  color: var(--lamp);
+}
+
+.rel__by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.rel__dot {
+  color: var(--score);
+}
+
+.rel__type,
+.rel__year {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.svc-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--lamp);
+  opacity: 0.9;
+}
+
+/* --------------------------------------------------------------------------
+   Contact detail blocks — shared with /contact
+   -------------------------------------------------------------------------- */
+
+.cd {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 620px) {
+  .cd {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: var(--gap) var(--u-half);
+  }
+}
+
+.cd__block {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.cd__label {
+  padding-bottom: 10px;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.cd__address,
+.cd__plain {
+  display: grid;
+  gap: 2px;
+  font-style: normal;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.cd__list {
+  display: grid;
+  gap: 12px;
+}
+
+.cd__list--inline {
+  grid-auto-flow: column;
+  justify-content: start;
+  gap: var(--gap);
+}
+
+.cd__sub {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 0.625rem;
+  color: color-mix(in srgb, var(--dust) 76%, var(--room));
+}
+
+.cd__value {
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+/* The basket link sits between the sections and the booking button. It renders
+   nothing until it has read localStorage, so the server and the client cannot
+   disagree about a count on first paint. */
+.nav__cart {
+  display: flex;
+  align-items: center;
+}

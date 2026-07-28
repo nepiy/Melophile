@@ -1,0 +1,302 @@
+/* ==========================================================================
+   Roster — the artist list, the artist editor, the service list and the
+   service editor.
+
+   Only what admin.css does not already provide: the grid inside .ad-row, the
+   read-only "Appears on" table, the icon preview beside the select, and the
+   delete row under each editor. Same tokens, same hairlines, no new colour,
+   no radius, no shadow.
+   ========================================================================== */
+
+.ros-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------------------------------
+   Artist rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is
+   what keeps a 360px screen scrolling down rather than sideways.
+   -------------------------------------------------------------------------- */
+
+/* Two classes, so it beats .ad-row__thumb's square regardless of which
+   stylesheet the route happens to load first. */
+.ros-row .ros-row__photo {
+  align-self: start;
+  aspect-ratio: 4 / 5;
+}
+
+/* The 48px frame is too small to carry the "No image yet" plate SmartImage
+   draws; the hatched frame says it on its own, and the row says it in words. */
+.ros-row__photo .img__empty-label {
+  display: none;
+}
+
+.ros-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ros-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ros-row__link:hover {
+  color: var(--lamp);
+}
+
+.ros-row__role {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.ros-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+}
+
+.ros-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ros-row__note {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .ros-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .ros-row__photo {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .ros-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ros-row__meta {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+  }
+
+  .ros-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .ros-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Service rows
+
+   Same skeleton, one column narrower: the icon sits in a hairline frame the
+   size of the artist thumbnails so the two lists line up with each other.
+   -------------------------------------------------------------------------- */
+
+.svc-row__icon {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 48px;
+  height: 48px;
+  border: var(--hair) solid var(--score);
+  background: var(--rack);
+}
+
+.svc-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.svc-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.svc-row__link:hover {
+  color: var(--lamp);
+}
+
+.svc-row__text {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.svc-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (min-width: 620px) {
+  .svc-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .svc-row__icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .svc-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .svc-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .svc-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Editors
+   -------------------------------------------------------------------------- */
+
+.ros-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+/* Appears on — a readout, not a field. Nothing in here is editable, so it is
+   set as a table of records rather than dressed up as a list of controls. */
+.ros-appears__note {
+  max-width: 60ch;
+  margin-bottom: var(--gap-sm);
+  color: color-mix(in srgb, var(--dust) 80%, var(--room));
+  font-size: 0.8125rem;
+}
+
+.ros-appears__blank {
+  padding: var(--gap-sm);
+  border: var(--hair) dashed var(--score);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.ros-appears {
+  border-top: var(--hair) solid var(--score);
+}
+
+.ros-appears__item {
+  display: grid;
+  gap: 2px var(--gap);
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 520px) {
+  .ros-appears__item {
+    grid-template-columns: 8rem minmax(0, 1fr) auto;
+  }
+}
+
+.ros-appears__cat {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.ros-appears__title {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ros-appears__title:hover {
+  color: var(--lamp);
+}
+
+.ros-appears__year {
+  color: var(--dust);
+  font-size: 0.6875rem;
+}
+
+/* The icon beside the select, drawn by the same component the site uses. */
+.ros-pick {
+  display: grid;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+
+@media (min-width: 520px) {
+  .ros-pick {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.ros-pick__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: var(--hair) solid var(--score);
+  background: var(--rack);
+}
+
+.ros-pick__name {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Sits under the save bar, in its own form: a submit button inside the editor
+   form would submit the editor form, and a nested form is invalid HTML. */
+.ros-danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+  padding-top: var(--gap);
+}
+
+.ros-danger__text {
+  max-width: 60ch;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}

@@ -1,0 +1,345 @@
+/* ==========================================================================
+   /artists — the roster grid and the panel it opens.
+
+   The grid is photographs and nothing else. The only ink on a tile is the name,
+   and the name is not there until the pointer or the keyboard arrives. No
+   shadows, no radii, no second colour: the tiles separate by their own hairline
+   and by the gap between them.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   The grid — two up, three up, four up. Never one: one column is a list, and
+   the client asked for a wall.
+   -------------------------------------------------------------------------- */
+
+.roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+@media (min-width: 720px) {
+  .roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .roster {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.roster__cell {
+  min-width: 0;
+}
+
+.roster__tile {
+  display: block;
+  width: 100%;
+  background: none;
+  color: inherit;
+}
+
+/* The positioning context for the tint and the name plate. Its height is the
+   photograph's, because the photograph is the only thing in flow. */
+.roster__frame {
+  position: relative;
+  display: block;
+}
+
+/* SmartImage frames are square by default. The roster and the panel share one
+   4:5 portrait crop, so a wall of photographs the label did not commission
+   still reads as a set. Compounded with .img so the override cannot depend on
+   which stylesheet the bundler emitted first. */
+.roster__art.img,
+.ad__photo.img {
+  aspect-ratio: 4 / 5;
+}
+
+/* Held back to a duotone: desaturated and dimmed under a low amber wash, so
+   six different photographers read as one roster. Full colour is the reward
+   for arriving — pointer or keyboard, the same treatment either way. */
+.roster__art .img__el {
+  filter: saturate(0.18) contrast(1.06) brightness(0.86);
+  transition:
+    transform var(--t-ease) var(--ease-gear),
+    filter var(--t-ease) var(--ease-gear);
+}
+
+.roster__tint {
+  position: absolute;
+  inset: 0;
+  background: var(--lamp-ghost);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity var(--t-ease) var(--ease-gear);
+}
+
+.roster__tile:hover .img__el,
+.roster__tile:focus-visible .img__el {
+  transform: scale(1.03);
+  filter: saturate(1) contrast(1) brightness(1);
+}
+
+.roster__tile:hover .roster__tint,
+.roster__tile:focus-visible .roster__tint {
+  opacity: 0;
+}
+
+/* The name plate. Silkscreened onto the corner of the panel, on solid --room
+   so it stays at 15:1 whatever the photograph does underneath it. Descendant
+   selector so it wins over .label without depending on stylesheet order. */
+.roster__tile .roster__name {
+  position: absolute;
+  left: var(--hair);
+  bottom: var(--hair);
+  max-width: calc(100% - 2 * var(--hair));
+  padding: 8px 12px;
+  background: var(--room);
+  border-top: var(--hair) solid var(--score);
+  border-right: var(--hair) solid var(--score);
+  color: var(--tape);
+  line-height: 1.3;
+  opacity: 0;
+  transform: translate3d(0, 4px, 0);
+  transition:
+    opacity var(--t-quick) linear,
+    transform var(--t-quick) var(--ease-gear);
+}
+
+.roster__tile:hover .roster__name,
+.roster__tile:focus-visible .roster__name {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roster__art .img__el,
+  .roster__tint,
+  .roster__tile .roster__name {
+    transition: none;
+  }
+
+  /* The colour still resolves — that is state, not motion. The travel does not. */
+  .roster__tile:hover .img__el,
+  .roster__tile:focus-visible .img__el {
+    transform: none;
+  }
+
+  .roster__tile .roster__name {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The panel — photograph, name, role, description, links, catalogue.
+
+   Narrow: name and role first, then the photograph, then the reading matter,
+   so the heading is above the fold on a phone without cropping the portrait.
+   Wide: the photograph takes the left column and spans both rows.
+   -------------------------------------------------------------------------- */
+
+.ad {
+  display: grid;
+  grid-template-areas:
+    'head'
+    'photo'
+    'body';
+  gap: var(--gap);
+  /* The Dialog's close bar carries the hairline above this; the padding is what
+     keeps the photograph off it. */
+  padding: var(--gap);
+}
+
+@media (min-width: 780px) {
+  .ad {
+    grid-template-areas:
+      'photo head'
+      'photo body';
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    column-gap: var(--u-half);
+    row-gap: var(--gap);
+    padding: var(--u-half);
+  }
+}
+
+.ad__photo {
+  grid-area: photo;
+  align-self: start;
+}
+
+.ad__head {
+  grid-area: head;
+}
+
+.ad__name {
+  font-size: var(--fs-h2);
+  color: var(--tape);
+}
+
+.ad__role {
+  margin-top: 10px;
+  color: var(--dust);
+}
+
+.ad__body {
+  grid-area: body;
+  min-width: 0;
+}
+
+.ad__body > * + * {
+  margin-top: var(--u-half);
+}
+
+.ad__block-label {
+  padding-bottom: 10px;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+/* ---- links out ---- */
+
+.ad__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm) var(--gap);
+  margin-top: 14px;
+}
+
+/* ---- appears on ---- */
+
+.ad__rels {
+  margin-top: 14px;
+}
+
+.ad__rels > li + li {
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad__rel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.ad__rel-art.img {
+  flex: none;
+  width: 56px;
+  aspect-ratio: 1;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+/* At 56px the invitation does not fit and is not needed — the hatched frame
+   already says "nothing here yet", and the release title is right beside it. */
+.ad__rel-art .img__empty-label {
+  display: none;
+}
+
+.ad__rel-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ad__rel-cat {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+}
+
+.ad__rel-title {
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+  font-size: 1rem;
+  line-height: var(--lh-head);
+  color: var(--tape);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ad__rel:hover .ad__rel-title {
+  color: var(--lamp);
+}
+
+.ad__rel:hover .ad__rel-art {
+  border-color: color-mix(in srgb, var(--score) 40%, var(--lamp));
+}
+
+.ad__rel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ad__rel-dot {
+  color: var(--score);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad__rel-art.img,
+  .ad__rel-title {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Step through the roster without leaving the panel. Both controls wrap, so
+   neither is ever disabled — a disabled control that had focus is a control
+   that has just dropped it.
+   -------------------------------------------------------------------------- */
+
+.ad__nav {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad__nav-prev {
+  grid-area: 1 / 1;
+  justify-self: start;
+}
+
+.ad__nav-next {
+  grid-area: 1 / 2;
+  justify-self: end;
+}
+
+/* Under 480px the counter takes its own line rather than squeezing the two
+   controls it sits between. Explicit areas, so nothing depends on auto-flow. */
+.ad__nav-count {
+  grid-area: 2 / 1 / 3 / 3;
+  justify-self: center;
+  color: var(--dust);
+}
+
+@media (min-width: 480px) {
+  .ad__nav {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .ad__nav-count {
+    grid-area: 1 / 2;
+  }
+
+  .ad__nav-next {
+    grid-area: 1 / 3;
+  }
+}
+
+@media (min-width: 780px) {
+  .ad__nav {
+    padding: var(--gap-sm) var(--u-half);
+  }
+}

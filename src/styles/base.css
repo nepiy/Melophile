@@ -1,0 +1,307 @@
+/* ==========================================================================
+   Base — reset, typography, focus. Derived entirely from tokens.css.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+}
+
+html {
+  background: var(--room);
+  color-scheme: dark only;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* `clip`, not `hidden`, and on html rather than body. `overflow-x: hidden` on
+     body computes overflow-y to `auto`, which quietly turns body into a scroll
+     container — window.scrollTo stops working and anchor links get strange.
+     `clip` contains the hero's chromatic overspill without any of that. */
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--room);
+  color: var(--tape);
+  font-family: var(--face-body);
+  font-variation-settings: var(--body-axes);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  /* On a warm near-black, subpixel AA fattens light strokes. Grayscale keeps
+     the serif at its measured weight. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Transparent so the smoke layer below shows through html's base colour. */
+  background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   The smoke.
+
+   Three soft pools of warm haze drifting behind everything, on a 90-second
+   cycle slow enough that you never catch it moving — you only notice the room
+   is not flat. It sits at z-index -1 under transparent body, so it is behind
+   every piece of content without touching the stacking order the nav and the
+   dialogs rely on.
+
+   Animated with transform alone. Under prefers-reduced-motion it holds still
+   and stays visible: the haze is the theme, the drift is the decoration.
+   -------------------------------------------------------------------------- */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -25%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 38% at 22% 26%, var(--smoke-a), transparent 70%),
+    radial-gradient(38% 34% at 78% 58%, var(--smoke-b), transparent 72%),
+    radial-gradient(48% 42% at 52% 92%, var(--smoke-a), transparent 74%);
+  filter: blur(60px);
+  animation: smoke-drift 90s ease-in-out infinite alternate;
+}
+
+@keyframes smoke-drift {
+  from {
+    transform: translate3d(-2.5%, 1.5%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(2.5%, -1.5%, 0) scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+    transform: scale(1.08);
+  }
+}
+
+/* Scroll lock, applied by the dialog primitive. */
+body[data-scroll-locked='true'] {
+  overflow: hidden;
+  /* Compensating for the removed scrollbar avoids a layout jump on open. */
+  padding-right: var(--scrollbar-w, 0px);
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+svg {
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  /* Hairline vector work, not skeuomorphic chrome. */
+  vector-effect: non-scaling-stroke;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+  text-align: left;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   Type roles
+   -------------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--face-display);
+  font-variation-settings: var(--head-axes);
+  line-height: var(--lh-head);
+  letter-spacing: var(--tr-head);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+}
+h2 {
+  font-size: var(--fs-h2);
+}
+h3 {
+  font-size: var(--fs-h3);
+}
+
+/* The utility mono. Chrome is set in this, prose is not — that split is why
+   operating the site feels like operating a device. */
+.mono {
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.label {
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  line-height: 1;
+  color: var(--dust);
+}
+
+.dim {
+  color: var(--dust);
+}
+.accent {
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Links
+   -------------------------------------------------------------------------- */
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Prose links get an underline; chrome links get the accent on hover. Because
+   panel fills barely differ from the background, hover must change ink. */
+a.link {
+  color: var(--lamp);
+  text-underline-offset: 0.22em;
+  text-decoration: underline;
+  text-decoration-thickness: var(--hair);
+  text-decoration-color: color-mix(in srgb, var(--lamp) 45%, transparent);
+  transition: text-decoration-color var(--t-quick) var(--ease-gear);
+}
+a.link:hover {
+  text-decoration-color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Focus — a hard rule, not a nice idea.
+   Panel fill is only 1.085:1 against the base, so focus can never rely on a
+   background change. It is always a 2px amber outline, everywhere.
+   -------------------------------------------------------------------------- */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 2px;
+}
+
+/* Inputs sit inside hairline boxes, so their ring goes inward to stay clear
+   of neighbouring fields. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: -1px;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--gap-sm);
+  left: var(--gap-sm);
+  z-index: var(--z-toast);
+  padding: 10px 16px;
+  background: var(--rack);
+  border: var(--hair) solid var(--lamp);
+  color: var(--tape);
+  transform: translateY(-200%);
+  transition: transform var(--t-quick) var(--ease-gear);
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Selection — the wordmark is real, selectable text, so this gets seen.
+   -------------------------------------------------------------------------- */
+
+::selection {
+  background: var(--lamp);
+  color: var(--room);
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-left: var(--content-inset);
+  padding-right: var(--pad-x);
+}
+
+.rule {
+  height: var(--hair);
+  background: var(--score);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--room);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--score);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--score) 60%, var(--dust));
+}
+
+/* Firefox */
+* {
+  scrollbar-color: var(--score) var(--room);
+  scrollbar-width: thin;
+}

@@ -1,0 +1,630 @@
+/* ==========================================================================
+   Events and orders — the last two admin surfaces.
+
+   Only what admin.css does not already provide: the status tabs, the grid
+   inside .ad-row on two different lists, the ticket readout in the event
+   editor, the order lines, and the not-notified warning. Same tokens, same
+   hairlines, no new colour, no radius, no shadow.
+
+   TWO PREFIXES, ONE FILE.
+     aev-  the events admin
+     aor-  the orders admin
+
+   Neither collides with anything already here: ev- is the public events page
+   (src/styles/events.css), st- is the storefront (store.css), sto- is the store
+   admin (admin-store.css) and bk- is the booking desk (admin-desk.css). Two
+   stylesheets that never meet on a page are still two stylesheets that can be
+   read at the same time, and one namespace per surface keeps that honest.
+
+   --peak and --peak-lit appear in exactly three blocks in this file: the
+   warning that says no email went out, its banner counterpart, and the ticket
+   readout when the count has gone past the capacity. The hairline is --peak,
+   the words are --peak-lit, because --peak is 3.23:1 and fails AA as text.
+   ========================================================================== */
+
+/* The panels are the form's own rows, so their own bottom margin would double
+   up with the grid gap. */
+.ad-form > .ad-panel {
+  margin-bottom: 0;
+}
+
+/* The mono readout on the right of a panel head. */
+.aev-count,
+.aor-count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* A plain sentence above the controls it explains. Prose, so it is the serif —
+   the chrome around it is the mono. */
+.aev-note,
+.aor-note {
+  max-width: 64ch;
+  margin-bottom: var(--gap-sm);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.aev-note {
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid var(--lamp);
+}
+
+/* ==========================================================================
+   EVENTS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   List rows
+
+   .ad-row is a bare grid, so the columns are set here. Below 620px nothing is
+   set at all: every cell is a full-width band and the row stacks, which is what
+   keeps a 360px screen scrolling down rather than sideways.
+   -------------------------------------------------------------------------- */
+
+.aev-row__art {
+  align-self: start;
+}
+
+/* The 48px frame is too small to carry the "No image yet" plate SmartImage
+   draws; the hatched frame says it on its own, and the row says it in words. */
+.aev-row__art .img__empty-label {
+  display: none;
+}
+
+.aev-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The date leads the row, because on this screen the date is the identity —
+   two shows can share a title, never a slot. */
+.aev-row__when {
+  color: var(--lamp);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+/* A date behind us is a record, not a job. Greyed by colour rather than
+   opacity, so the text keeps its contrast ratio. */
+.aev-row[data-past='true'] .aev-row__when {
+  color: var(--dust);
+}
+
+.aev-row__link {
+  justify-self: start;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.aev-row__link:hover {
+  color: var(--lamp);
+}
+
+.aev-row__venue {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.aev-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one number on the row anyone scans down a column, so it is the one that
+   is not dimmed. */
+.aev-row__price {
+  color: var(--tape);
+}
+
+.aev-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.aev-row__note {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .aev-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    column-gap: var(--gap);
+  }
+
+  .aev-row__art {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .aev-row__main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .aev-row__meta {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+  }
+
+  .aev-row__flags {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .aev-row .ad-row__tools {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Editor
+   -------------------------------------------------------------------------- */
+
+.aev-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+/* Tickets left, worked out while the client is still typing. A readout, not a
+   field: it states what the two numbers above it add up to. */
+.aev-readout {
+  padding: 10px 0;
+  border-top: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* Sold past the capacity. One of the two numbers is wrong and the screen says
+   so — the hairline is the signal red, the words are the lightened one. */
+.aev-readout--over {
+  padding-left: var(--gap-sm);
+  border-top-color: var(--peak);
+  border-left: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+}
+
+/* Sits under the save bar, in its own form: a submit button inside the editor
+   form would submit the editor form, and a nested form is invalid HTML. */
+.aev-danger,
+.aor-danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap);
+  padding-top: var(--gap);
+}
+
+.aev-danger__text,
+.aor-danger__text {
+  max-width: 60ch;
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* ==========================================================================
+   ORDERS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Status tabs
+
+   Links, not buttons: the filter is a query string, so a tab can be
+   bookmarked, opened in a new tab and stepped back through. They wrap rather
+   than scroll — six short words fit two lines at 360px.
+   -------------------------------------------------------------------------- */
+
+.aor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: var(--u-half);
+  border: var(--hair) solid var(--score);
+}
+
+.aor-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 14px;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.aor-tab + .aor-tab {
+  border-left: var(--hair) solid var(--score);
+}
+
+.aor-tab:hover {
+  color: var(--tape);
+}
+
+.aor-tab[aria-current='page'] {
+  background: var(--rack);
+  color: var(--lamp);
+}
+
+.aor-tab__n {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--dust) 76%, var(--room));
+}
+
+.aor-tab[aria-current='page'] .aor-tab__n,
+.aor-tab:hover .aor-tab__n {
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Order rows
+
+   The left hairline is transparent on every row and lamp on one still waiting
+   for payment, so the order that needs attention is obvious without the rows
+   shifting a pixel against each other. Same device the booking desk uses for a
+   new request, for the same reason.
+   -------------------------------------------------------------------------- */
+
+.aor-row {
+  padding-left: var(--gap-sm);
+  border-left: var(--hair) solid transparent;
+}
+
+.aor-row[data-wait='true'] {
+  border-left-color: var(--lamp);
+}
+
+.aor-row__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The reference leads, and it is the biggest mono on the screen: it is the one
+   string the client will ever have to match against something a stranger is
+   reading down a phone. */
+.aor-row__ref {
+  justify-self: start;
+  color: var(--lamp);
+  font-size: 0.9375rem;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.aor-row__ref:hover {
+  color: var(--tape);
+}
+
+.aor-row__who {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+.aor-row__mail {
+  justify-self: start;
+  color: var(--dust);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.aor-row__mail:hover {
+  color: var(--lamp);
+}
+
+.aor-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Money, so it is the one thing on the row that is not dimmed. */
+.aor-row__total {
+  color: var(--tape);
+  font-size: var(--fs-mono);
+}
+
+.aor-row__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.aor-row__ago {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (min-width: 620px) {
+  .aor-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: var(--gap);
+  }
+
+  .aor-row__main {
+    grid-column: 1;
+  }
+
+  .aor-row__meta {
+    grid-column: 2;
+    align-self: start;
+    justify-content: flex-end;
+  }
+
+  .aor-row__flags {
+    grid-column: 3;
+    align-self: start;
+    justify-content: flex-end;
+  }
+
+  /* Auto-placement does the rest: the warning and the tools each span the full
+     width in the order they appear — so a row with no warning closes up
+     instead of leaving a gap where it would go. */
+  .aor-row__warn,
+  .aor-row .ad-row__tools {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   "No email was sent"
+
+   The one warning on these screens that is about something already broken
+   rather than something the client typed wrong, so it is the one block here
+   allowed the signal red.
+   -------------------------------------------------------------------------- */
+
+.aor-warn {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: var(--hair) solid var(--peak);
+}
+
+.aor-warn__tag,
+.aor-warn__text,
+.aor-warn__reason {
+  color: var(--peak-lit);
+}
+
+.aor-warn__text {
+  font-size: 0.8125rem;
+}
+
+/* Truncated on the row; the order page prints the whole thing. */
+.aor-warn__reason {
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* Inside .ad-banner, which already carries the red hairline. */
+.aor-banner__reason {
+  color: var(--peak-lit);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   One order
+   -------------------------------------------------------------------------- */
+
+.aor-head__ref {
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.aor-head__meta {
+  margin-top: 8px;
+  color: var(--dust);
+}
+
+/* The lines. Four columns on a wide screen; on a narrow one the quantity and
+   the item stay together and the two prices sit under them, which is the only
+   arrangement that does not force a 360px screen sideways. */
+.aor-items__head,
+.aor-item {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 4px var(--gap-sm);
+  align-items: baseline;
+}
+
+.aor-items__head {
+  padding-bottom: 6px;
+  border-bottom: var(--hair) solid var(--score);
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+}
+
+/* The two price headings have nowhere to sit until the row is four columns. */
+.aor-items__head > :nth-child(3),
+.aor-items__head > :nth-child(4) {
+  display: none;
+}
+
+.aor-item {
+  padding: 10px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+/* The totals below draw their own rule, and two hairlines a gap apart read as
+   a mistake rather than a division. */
+.aor-items > .aor-item:last-child {
+  border-bottom: 0;
+}
+
+.aor-item__qty {
+  color: var(--lamp);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.aor-item__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.aor-item__title {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+.aor-item__variant {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.aor-item__unit,
+.aor-item__total {
+  grid-column: 2;
+  color: var(--dust);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.aor-item__total {
+  color: var(--tape);
+}
+
+@media (min-width: 620px) {
+  .aor-items__head,
+  .aor-item {
+    grid-template-columns: 3rem minmax(0, 1fr) 7rem 7rem;
+    column-gap: var(--gap);
+  }
+
+  .aor-items__head > :nth-child(3),
+  .aor-items__head > :nth-child(4) {
+    display: block;
+    text-align: right;
+  }
+
+  .aor-item__unit,
+  .aor-item__total {
+    grid-column: auto;
+    text-align: right;
+  }
+}
+
+.aor-totals {
+  margin-top: var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.aor-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 8px 0;
+}
+
+.aor-total dd {
+  color: var(--dust);
+  font-variant-numeric: tabular-nums;
+}
+
+.aor-total--grand {
+  border-top: var(--hair) solid var(--score);
+}
+
+.aor-total--grand dd {
+  color: var(--tape);
+  font-size: 1.125rem;
+}
+
+.aor-total__ccy {
+  color: var(--dust);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+}
+
+/* Definition rows — the customer block and the payment block. */
+.aor-lines {
+  border-top: var(--hair) solid var(--score);
+}
+
+.aor-line {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 620px) {
+  .aor-line {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: baseline;
+  }
+}
+
+.aor-line__label {
+  color: var(--dust);
+}
+
+.aor-line__value {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+
+.aor-line__value--mono {
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Plain text, and it stays plain: the line breaks the customer typed are the
+   only formatting a delivery address ever gets. */
+.aor-address {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: var(--lh-body);
+}
+
+.aor-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+/* aria-pressed is the state, so it is also the selector — the styling cannot
+   drift from what a screen reader is told. */
+.aor-state[aria-pressed='true'] {
+  background: var(--rack);
+  border-color: var(--lamp);
+  color: var(--lamp);
+}

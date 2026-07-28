@@ -1,0 +1,430 @@
+/* ==========================================================================
+   Order history — /account/orders and /account/orders/<reference>
+
+   account.css already carries the shell, the panels, the chips and the empty
+   state, and this sheet does not repeat any of them: an order row uses
+   .ac-chip for its status because a status chip is a status chip, and the
+   panel it sits in is .ac-panel. What is here is only what an order is and the
+   dashboard is not — a ledger row, a progress strip, a set of lines with money
+   down the right.
+
+   Same furniture as everywhere else: hairlines separate, nothing lifts,
+   nothing is rounded, nothing casts a shadow, and every value is a token.
+   Money and references are .mono, which already sets tabular numerals, so a
+   column of totals lines up on the decimal point.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Filters — one strip of statuses with counts.
+
+   It scrolls sideways at 360px rather than wrapping: seven statuses over three
+   ragged rows stops reading as a strip, and a count that has wrapped away from
+   its word is just a loose number.
+   -------------------------------------------------------------------------- */
+
+.or-filters {
+  margin-top: var(--gap-sm);
+  border-block: var(--hair) solid var(--score);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.or-filters__list {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.or-filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 16px;
+  color: var(--dust);
+  white-space: nowrap;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.or-filter:first-child {
+  padding-left: 0;
+}
+
+.or-filter + .or-filter {
+  border-left: var(--hair) solid var(--score);
+}
+
+/* The same travelling underline as the account tabs and the nav. */
+.or-filter::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: var(--hair);
+  background: var(--lamp);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t-quick) var(--ease-gear);
+}
+
+.or-filter:hover,
+.or-filter[aria-current='page'] {
+  color: var(--tape);
+}
+
+.or-filter:hover::after,
+.or-filter[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+.or-filter:focus-visible {
+  outline-offset: -3px;
+}
+
+/* A count is a reading, so it is mono and boxed like one. */
+.or-filter__n {
+  font-family: var(--face-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+}
+
+.or-filter[aria-current='page'] .or-filter__n {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   The ledger — one row per order, newest first.
+
+   The reference leads, because it is the one string the customer will ever be
+   asked to match against something a stranger is holding. Money is right of
+   it and mono, so a column of totals can be read down.
+   -------------------------------------------------------------------------- */
+
+.or-list {
+  margin-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+  list-style: none;
+}
+
+.or-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: var(--gap-sm) 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 720px) {
+  .or-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--gap);
+  }
+}
+
+.or-row__main {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* The whole row is reachable from this one link, so there is never a second
+   tab stop for the same order. */
+.or-row__ref {
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: var(--lamp);
+  overflow-wrap: anywhere;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.or-row__ref:hover {
+  color: var(--tape);
+}
+
+.or-row__meta {
+  display: flex;
+  gap: 4px 14px;
+  flex-wrap: wrap;
+  color: var(--dust);
+}
+
+/* The em dash between two meta readings, drawn rather than typed so it cannot
+   end a line on its own. */
+.or-row__meta > * + *::before {
+  content: '·';
+  margin-right: 14px;
+  color: var(--score);
+}
+
+.or-row__side {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+}
+
+@media (min-width: 720px) {
+  .or-row__side {
+    justify-content: flex-end;
+  }
+}
+
+.or-row__total {
+  font-family: var(--face-mono);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--tape);
+}
+
+.or-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   The progress strip — Placed · Paid · Processing · Shipped · Delivered
+
+   Steps are joined by the same hairline as everything else, and the one the
+   order is standing on is lit. Steps behind it are reached; steps ahead are
+   dim. There is no animation: this is a status, not a loading bar.
+   -------------------------------------------------------------------------- */
+
+.or-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: var(--gap-sm);
+  border: var(--hair) solid var(--score);
+  list-style: none;
+}
+
+.or-step {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: var(--gap-sm) 10px;
+  min-width: 0;
+}
+
+.or-step + .or-step {
+  border-left: var(--hair) solid var(--score);
+}
+
+/* The mark: a hairline square, filled once the step has been reached. */
+.or-step__mark {
+  width: 9px;
+  height: 9px;
+  border: var(--hair) solid var(--score);
+}
+
+.or-step[data-state='done'] .or-step__mark {
+  background: var(--dust);
+  border-color: var(--dust);
+}
+
+.or-step[data-state='now'] .or-step__mark {
+  background: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.or-step__word {
+  color: var(--dust);
+  overflow-wrap: anywhere;
+}
+
+.or-step[data-state='done'] .or-step__word {
+  color: var(--tape);
+}
+
+.or-step[data-state='now'] .or-step__word {
+  color: var(--lamp);
+}
+
+.or-step__when {
+  color: var(--dust);
+  font-size: 0.6875rem;
+}
+
+@media (max-width: 620px) {
+  /* Five columns at 360px gives each step six characters. Stacked, each step
+     keeps its word and its mark on one line. */
+  .or-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .or-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px var(--gap-sm);
+  }
+
+  .or-step + .or-step {
+    border-left: 0;
+    border-top: var(--hair) solid var(--score);
+  }
+}
+
+/* Cancelled and refunded do not get a timeline: three grey steps ahead of an
+   order that is never going to move again would be a picture of a lie. */
+.or-stopped {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--peak);
+}
+
+.or-stopped__label {
+  color: var(--peak-lit);
+}
+
+.or-stopped__text {
+  max-width: 62ch;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   Lines and money
+   -------------------------------------------------------------------------- */
+
+.or-lines {
+  margin-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+  list-style: none;
+}
+
+.or-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px var(--gap-sm);
+  padding: 13px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.or-line__title {
+  min-width: 0;
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.or-line__variant {
+  color: var(--dust);
+}
+
+.or-line__unit {
+  grid-column: 1;
+  color: var(--dust);
+}
+
+.or-line__money {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--face-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--tape);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.or-sums {
+  margin-top: var(--gap-sm);
+  margin-left: auto;
+  max-width: 340px;
+}
+
+.or-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 9px 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.or-sum dt {
+  color: var(--dust);
+}
+
+.or-sum dd {
+  font-family: var(--face-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--tape);
+  white-space: nowrap;
+}
+
+.or-sum--total dd {
+  font-size: var(--fs-h3);
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Tracking, the payment record, and the foot
+   -------------------------------------------------------------------------- */
+
+.or-track {
+  display: grid;
+  gap: 10px;
+  margin-top: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--score);
+  border-left-color: var(--lamp);
+}
+
+.or-track__label {
+  color: var(--lamp);
+}
+
+.or-track__no {
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: var(--tape);
+  overflow-wrap: anywhere;
+  /* One click selects the whole number, which is what it is for. */
+  user-select: all;
+}
+
+.or-track__text {
+  max-width: 62ch;
+  color: var(--dust);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.or-ship {
+  display: grid;
+  gap: 3px;
+  margin-top: var(--gap-sm);
+  color: var(--tape);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+.or-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.or-foot__note {
+  color: var(--dust);
+  font-size: var(--fs-small);
+}

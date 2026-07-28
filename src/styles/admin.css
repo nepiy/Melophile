@@ -1,0 +1,1094 @@
+/* ==========================================================================
+   Admin.
+
+   Same palette, same hairlines, same mono as the public site — the client
+   should feel they are operating the same machine, not a different product.
+   No new colours, no shadows, no rounded corners.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Shell
+   -------------------------------------------------------------------------- */
+
+.ad-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100dvh;
+}
+
+@media (min-width: 900px) {
+  .ad-shell {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+}
+
+.ad-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--u-half) var(--gap);
+  background: var(--room);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 900px) {
+  .ad-side {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    border-bottom: 0;
+    border-right: var(--hair) solid var(--score);
+    overflow-y: auto;
+  }
+}
+
+.ad-side__logo {
+  display: grid;
+  gap: 4px;
+}
+
+.ad-side__mark {
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 112,
+    'wght' 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.1em;
+  color: var(--tape);
+}
+
+.ad-side__tag {
+  color: var(--lamp);
+}
+
+.ad-side__foot {
+  margin-top: auto;
+  padding-top: var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad-side__who {
+  margin-top: var(--gap-sm);
+  color: color-mix(in srgb, var(--dust) 76%, var(--room));
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Nav
+   -------------------------------------------------------------------------- */
+
+.ad-nav__list {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ad-nav__list::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .ad-nav__list {
+    display: grid;
+    gap: 0;
+    overflow: visible;
+  }
+
+  .ad-nav__item + .ad-nav__item {
+    border-top: var(--hair) solid var(--score);
+  }
+}
+
+.ad-nav__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: var(--hair) solid transparent;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  white-space: nowrap;
+  color: var(--dust);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ad-nav__link--btn {
+  text-align: left;
+}
+
+.ad-nav__link:hover {
+  color: var(--lamp);
+}
+
+/* Panel fill barely differs from the base, so the current item is marked with
+   ink and a hairline rather than a background. */
+.ad-nav__link[aria-current='page'] {
+  color: var(--tape);
+  border-color: var(--score);
+  background: var(--rack);
+}
+
+@media (min-width: 900px) {
+  .ad-nav__link[aria-current='page'] {
+    border-color: transparent;
+    border-left-color: var(--lamp);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Badges
+   -------------------------------------------------------------------------- */
+
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 6px;
+  border: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: var(--dust);
+}
+
+/* The one place signal red earns its keep in here: something is waiting. */
+.ad-badge--new {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+.ad-badge--published {
+  border-color: color-mix(in srgb, var(--lamp) 55%, var(--score));
+  color: var(--lamp);
+}
+
+.ad-badge--draft,
+.ad-badge--declined {
+  color: var(--dust);
+}
+
+.ad-badge--confirmed {
+  border-color: color-mix(in srgb, var(--lamp) 55%, var(--score));
+  color: var(--lamp);
+}
+
+.ad-badge--done {
+  color: color-mix(in srgb, var(--dust) 70%, var(--room));
+}
+
+/* --------------------------------------------------------------------------
+   Main column
+   -------------------------------------------------------------------------- */
+
+.ad-main {
+  min-width: 0;
+  padding: var(--u-half) var(--gap) calc(var(--u) * 2.4);
+}
+
+@media (min-width: 900px) {
+  .ad-main {
+    padding: var(--u) var(--u-half) calc(var(--u) * 2.4);
+  }
+}
+
+.ad-banner {
+  display: grid;
+  gap: 8px;
+  margin-bottom: var(--u-half);
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--peak);
+}
+
+.ad-banner__tag {
+  color: var(--peak-lit);
+}
+
+.ad-banner__text {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Page head — the same channel-strip idea as the public sections
+   -------------------------------------------------------------------------- */
+
+.ad-head {
+  display: grid;
+  gap: var(--gap-sm);
+  padding-bottom: var(--gap);
+  margin-bottom: var(--u-half);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+@media (min-width: 760px) {
+  .ad-head {
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+    gap: var(--gap);
+    align-items: start;
+  }
+}
+
+.ad-head__strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.ad-head__chan {
+  color: var(--lamp);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ad-head__rule {
+  flex: 1;
+  min-width: 14px;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.ad-head__h {
+  font-size: var(--fs-h2);
+  color: var(--tape);
+}
+
+.ad-head__intro {
+  max-width: 56ch;
+  margin-top: 10px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ad-head__aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Panels, sections, stats
+   -------------------------------------------------------------------------- */
+
+.ad-panel {
+  border: var(--hair) solid var(--score);
+  margin-bottom: var(--u-half);
+}
+
+.ad-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  border-bottom: var(--hair) solid var(--score);
+  background: var(--rack);
+}
+
+.ad-panel__body {
+  padding: var(--gap);
+}
+
+.ad-sec {
+  margin-bottom: var(--u-half);
+}
+
+.ad-sec__head {
+  padding-bottom: 10px;
+  margin-bottom: var(--gap-sm);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ad-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  border-top: var(--hair) solid var(--score);
+  border-left: var(--hair) solid var(--score);
+}
+
+.ad-stat {
+  border-right: var(--hair) solid var(--score);
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ad-stat__link {
+  display: grid;
+  gap: 6px;
+  padding: var(--gap-sm) var(--gap);
+  transition: background-color var(--t-quick) var(--ease-gear);
+}
+
+.ad-stat__link:hover {
+  background: var(--rack);
+}
+
+.ad-stat__n {
+  font-size: 1.5rem;
+  color: var(--tape);
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-stat__link:hover .ad-stat__n {
+  color: var(--lamp);
+}
+
+.ad-stat__note {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.6875rem;
+}
+
+/* Attention list + how-to list share the numbered-row idea */
+.ad-attend,
+.ad-howto__list {
+  display: grid;
+  gap: var(--gap-sm);
+}
+
+.ad-attend__item,
+.ad-howto__item {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  gap: var(--gap-sm);
+  align-items: start;
+}
+
+.ad-attend__item + .ad-attend__item,
+.ad-howto__item + .ad-howto__item {
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad-attend__n,
+.ad-howto__n {
+  color: var(--lamp);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-attend__text,
+.ad-howto__text {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.ad-attend__meta {
+  margin-top: 4px;
+  color: var(--dust);
+  font-size: 0.6875rem;
+}
+
+/* --------------------------------------------------------------------------
+   The sign-in gate
+   -------------------------------------------------------------------------- */
+
+.ad-gate {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--gap);
+}
+
+.ad-gate__panel {
+  width: min(420px, 100%);
+  padding: var(--u-half) var(--gap) var(--gap);
+  border: var(--hair) solid var(--score);
+}
+
+.ad-gate__strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--u-half);
+}
+
+.ad-gate__chan {
+  color: var(--lamp);
+  font-size: 0.75rem;
+}
+
+.ad-gate__rule {
+  flex: 1;
+  height: var(--hair);
+  background: var(--score);
+}
+
+.ad-gate__title {
+  font-family: var(--face-display);
+  font-variation-settings:
+    'wdth' 108,
+    'wght' 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.01em;
+  color: var(--tape);
+}
+
+.ad-gate__text {
+  margin-top: 10px;
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ad-gate__form {
+  display: grid;
+  gap: var(--gap-sm);
+  margin-top: var(--u-half);
+}
+
+.ad-gate__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.ad-gate__foot {
+  margin-top: var(--gap);
+  padding-top: var(--gap-sm);
+  border-top: var(--hair) solid var(--score);
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------------------
+   Forms
+   -------------------------------------------------------------------------- */
+
+.ad-form {
+  display: grid;
+  gap: var(--gap);
+}
+
+.ad-cols {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 760px) {
+  .ad-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ad-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ad-field__label {
+  color: var(--dust);
+}
+
+.ad-field__req {
+  color: var(--lamp);
+}
+
+.ad-field__hint {
+  color: color-mix(in srgb, var(--dust) 80%, var(--room));
+  font-size: 0.8125rem;
+}
+
+/* Errors: the hairline is signal red, the TEXT is the lightened red, because
+   --peak is 3.98:1 and fails AA for text. */
+.ad-field__error {
+  color: var(--peak-lit);
+  font-size: 0.8125rem;
+}
+
+.ad-field[data-error='true'] .ad-input,
+.ad-field[data-error='true'] .ad-textarea,
+.ad-field[data-error='true'] .ad-select {
+  border-color: var(--peak);
+}
+
+.ad-input,
+.ad-textarea,
+.ad-select {
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--rack);
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-body);
+  font-variation-settings: var(--body-axes);
+  font-size: var(--fs-small);
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.ad-input:hover,
+.ad-textarea:hover,
+.ad-select:hover {
+  border-color: color-mix(in srgb, var(--score) 55%, var(--dust));
+}
+
+.ad-input::placeholder,
+.ad-textarea::placeholder {
+  color: color-mix(in srgb, var(--dust) 62%, var(--room));
+}
+
+/* Anything that is really a code, a number or a date belongs in the mono. */
+.ad-input[type='date'],
+.ad-input[type='time'],
+.ad-input[type='number'],
+.ad-input--sm {
+  font-family: var(--face-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-input--sm {
+  padding: 8px 10px;
+}
+
+.ad-textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+  line-height: var(--lh-body);
+}
+
+.ad-select-wrap {
+  position: relative;
+  display: block;
+}
+
+.ad-select {
+  appearance: none;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+.ad-select-wrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 7px;
+  height: 7px;
+  border-right: var(--hair) solid var(--dust);
+  border-bottom: var(--hair) solid var(--dust);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.ad-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.ad-check__box {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--lamp);
+}
+
+.ad-check__label {
+  color: var(--tape);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+.ad-check__hint {
+  grid-column: 2;
+  color: color-mix(in srgb, var(--dust) 80%, var(--room));
+  font-size: 0.8125rem;
+}
+
+.ad-formerror {
+  padding: var(--gap-sm) var(--gap);
+  border: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+  font-size: var(--fs-small);
+}
+
+.ad-status {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons specific to the admin
+   -------------------------------------------------------------------------- */
+
+.ad-btn--primary {
+  background: var(--lamp);
+  border-color: var(--lamp);
+  color: var(--room);
+}
+
+.ad-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--lamp) 84%, var(--tape));
+  border-color: color-mix(in srgb, var(--lamp) 84%, var(--tape));
+  color: var(--room);
+}
+
+.ad-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: 0.75rem;
+  line-height: 1;
+  transition:
+    color var(--t-quick) var(--ease-gear),
+    border-color var(--t-quick) var(--ease-gear);
+}
+
+.ad-iconbtn:hover {
+  color: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.ad-iconbtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ad-iconbtn:disabled:hover {
+  color: var(--dust);
+  border-color: var(--score);
+}
+
+.ad-iconbtn--drop:hover {
+  color: var(--peak-lit);
+  border-color: var(--peak);
+}
+
+.ad-order {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ad-danger:hover {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+.ad-danger--armed {
+  border-color: var(--peak);
+  color: var(--peak-lit);
+}
+
+.ad-danger__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Status toggle — draft / published
+   -------------------------------------------------------------------------- */
+
+.ad-toggle {
+  display: inline-flex;
+  border: var(--hair) solid var(--score);
+}
+
+.ad-toggle__seg {
+  display: block;
+}
+
+.ad-toggle__seg + .ad-toggle__seg {
+  border-left: var(--hair) solid var(--score);
+}
+
+/* The radio stays in the accessibility tree and keeps its keyboard behaviour;
+   only its box is hidden. */
+.ad-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ad-toggle__label {
+  display: block;
+  padding: 9px 16px;
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  color: var(--dust);
+  cursor: pointer;
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.ad-toggle__label:hover {
+  color: var(--tape);
+}
+
+.ad-toggle__input:checked + .ad-toggle__label {
+  background: var(--rack);
+  color: var(--lamp);
+}
+
+.ad-toggle__input:focus-visible + .ad-toggle__label {
+  outline: 2px solid var(--lamp);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Markdown field
+   -------------------------------------------------------------------------- */
+
+.ad-md {
+  border: var(--hair) solid var(--score);
+}
+
+.ad-md__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  padding: 8px 10px;
+  border-bottom: var(--hair) solid var(--score);
+  background: var(--rack);
+}
+
+.ad-md__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ad-md__tool {
+  padding: 6px 10px;
+  border: var(--hair) solid var(--score);
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition:
+    color var(--t-quick) var(--ease-gear),
+    border-color var(--t-quick) var(--ease-gear);
+}
+
+.ad-md__tool:hover {
+  color: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.ad-md__tool--toggle[aria-pressed='true'] {
+  color: var(--lamp);
+  border-color: var(--lamp);
+}
+
+.ad-md__area {
+  border: 0;
+  min-height: 12rem;
+}
+
+.ad-md__preview {
+  padding: var(--gap);
+  min-height: 12rem;
+}
+
+.ad-md__blank {
+  color: var(--dust);
+  font-size: var(--fs-small);
+}
+
+.ad-md__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  padding: 8px 10px;
+  border-top: var(--hair) solid var(--score);
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+}
+
+/* --------------------------------------------------------------------------
+   Image field + drop zone
+   -------------------------------------------------------------------------- */
+
+.ad-image {
+  display: grid;
+  gap: 10px;
+}
+
+.ad-image__label {
+  color: var(--dust);
+}
+
+.ad-image__grid {
+  display: grid;
+  gap: var(--gap);
+  align-items: start;
+}
+
+@media (min-width: 620px) {
+  .ad-image__grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+/* An empty slot has to look obviously fillable in here, even though it
+   collapses to nothing on the public site. */
+.ad-drop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 1;
+  padding: var(--gap-sm);
+  background: var(--rack);
+  border: var(--hair) dashed var(--score);
+  text-align: center;
+  transition: border-color var(--t-quick) var(--ease-gear);
+}
+
+.ad-image[data-aspect='portrait'] .ad-drop {
+  aspect-ratio: 4 / 5;
+}
+
+.ad-image[data-aspect='auto'] .ad-drop {
+  aspect-ratio: auto;
+  min-height: 9rem;
+}
+
+.ad-drop:hover,
+.ad-drop[data-drag='true'] {
+  border-color: var(--lamp);
+}
+
+.ad-drop[data-filled='true'] {
+  border-style: solid;
+  padding: 0;
+}
+
+.ad-drop__preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ad-drop__empty {
+  display: grid;
+  gap: 6px;
+}
+
+.ad-drop__title {
+  color: var(--lamp);
+}
+
+.ad-drop__hint {
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+.ad-image__side {
+  display: grid;
+  gap: var(--gap-sm);
+  min-width: 0;
+}
+
+.ad-image__chosen {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+.ad-flag {
+  display: inline-block;
+  padding: 4px 8px;
+  border: var(--hair) solid var(--peak);
+  color: var(--peak-lit);
+}
+
+.ad-file {
+  width: 100%;
+  color: var(--dust);
+  font-family: var(--face-mono);
+  font-size: 0.75rem;
+}
+
+.ad-file::file-selector-button {
+  margin-right: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  border: var(--hair) solid var(--score);
+  color: var(--tape);
+  font-family: var(--face-mono);
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tr-label);
+  cursor: pointer;
+}
+
+.ad-file::file-selector-button:hover {
+  border-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------------------
+   Repeater
+   -------------------------------------------------------------------------- */
+
+.ad-repeater {
+  display: grid;
+  gap: 10px;
+}
+
+.ad-repeater__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+}
+
+.ad-repeater__label {
+  color: var(--dust);
+}
+
+.ad-repeater__count {
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+  font-size: 0.625rem;
+}
+
+.ad-repeater__empty {
+  padding: var(--gap-sm);
+  border: var(--hair) dashed var(--score);
+  color: var(--dust);
+  font-size: 0.8125rem;
+}
+
+/* grid-template-columns comes from the component as an inline style, since only
+   it knows the column set. */
+.ad-repeater__head,
+.ad-repeater__row {
+  display: grid;
+  gap: 6px;
+  align-items: center;
+}
+
+.ad-repeater__head {
+  padding: 0 2px 6px;
+  border-bottom: var(--hair) solid var(--score);
+  font-family: var(--face-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--dust) 78%, var(--room));
+}
+
+.ad-repeater__rows {
+  display: grid;
+  gap: 6px;
+}
+
+.ad-repeater__row {
+  padding-top: 6px;
+}
+
+.ad-repeater__tools {
+  display: inline-flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.ad-repeater__add {
+  justify-self: start;
+}
+
+/* --------------------------------------------------------------------------
+   Save bar
+   -------------------------------------------------------------------------- */
+
+.ad-savebar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: var(--u-half);
+  background: var(--room-veil);
+  backdrop-filter: blur(10px);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad-savebar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap);
+  padding: var(--gap-sm) 0;
+}
+
+.ad-savebar__extra {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Tables / list rows, for the editor screens
+   -------------------------------------------------------------------------- */
+
+.ad-table {
+  border-top: var(--hair) solid var(--score);
+}
+
+.ad-row {
+  display: grid;
+  gap: var(--gap-sm);
+  align-items: center;
+  padding: var(--gap-sm) 0;
+  border-bottom: var(--hair) solid var(--score);
+}
+
+.ad-row:hover {
+  background: var(--rack);
+}
+
+.ad-row__thumb {
+  width: 48px;
+  aspect-ratio: 1;
+  border: var(--hair) solid var(--score);
+  object-fit: cover;
+}
+
+.ad-row__title {
+  color: var(--tape);
+  font-size: var(--fs-small);
+}
+
+.ad-row__meta {
+  color: var(--dust);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.ad-row__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
