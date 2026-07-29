@@ -5,8 +5,9 @@
   "description": "Melophile Records — independent label and recording studio. Public site + content admin.",
   "scripts": {
     "dev": "node scripts/dev-with-admin.mjs",
+    "prebuild": "npm run db:migrate",
     "build": "next build",
-    "start": "next start",
+    "start": "npm run db:migrate && next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",

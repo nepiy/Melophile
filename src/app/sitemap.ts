@@ -1,6 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { getAbout, getArtists, getReleases } from '@/lib/data'
 
+// This reads live CMS content, so it must not be evaluated by a deployment
+// builder before the SQLite database has been initialised.
+export const dynamic = 'force-dynamic'
+
 /**
  * The five public routes. /admin is deliberately absent — it is excluded here,
  * in robots.ts, and by the X-Robots-Tag header in next.config.ts.
