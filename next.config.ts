@@ -8,6 +8,9 @@ const config: NextConfig = {
   serverExternalPackages: ['better-sqlite3'],
 
   experimental: {
+    // Railway builders have modest memory. A single page-data worker avoids
+    // native-module crashes caused by several workers opening SQLite at once.
+    cpus: 1,
     // The admin is also reachable on its own port through scripts/admin-server.mjs.
     // Server actions compare Origin against Host to block cross-site posts, so
     // that port has to be named here or every form on the admin silently fails
