@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node scripts/dev-with-admin.mjs",
     "prebuild": "npm run db:migrate",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
+    "build:next": "npm run db:migrate && next build",
     "build:cloudflare": "opennextjs-cloudflare build",
     "preview:cloudflare": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:cloudflare": "opennextjs-cloudflare deploy",
