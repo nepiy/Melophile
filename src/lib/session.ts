@@ -7,12 +7,19 @@ import { adminUsers, db, sessions, type AdminUserRow } from '@/db'
 export const SESSION_COOKIE = 'lr_session'
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14 // 14 days
 
+export class SessionConfigurationError extends Error {
+  constructor() {
+    super(
+      'The admin cannot sign in until SESSION_SECRET is set to a value of at least 32 characters.',
+    )
+    this.name = 'SessionConfigurationError'
+  }
+}
+
 function secret(): string {
   const value = process.env.SESSION_SECRET
   if (!value || value.length < 32) {
-    throw new Error(
-      "SESSION_SECRET is missing or too short. Generate one with:\n  node -e \"console.log(require('crypto').randomBytes(48).toString('base64url'))\"\nand put it in .env.local",
-    )
+    throw new SessionConfigurationError()
   }
   return value
 }

@@ -16,6 +16,7 @@ import {
   destroyAllSessionsFor,
   destroySession,
   requireAdmin,
+  SessionConfigurationError,
 } from '@/lib/session'
 import { loginSchema, toFieldErrors, type FieldErrors } from '@/lib/validation'
 
@@ -101,7 +102,17 @@ export async function signIn(
     .set({ lastLoginAt: new Date() })
     .where(eq(adminUsers.id, user.id))
 
-  await createSession(user.id)
+  try {
+    await createSession(user.id)
+  } catch (error) {
+    // A missing Railway variable must not turn a valid sign-in into Next's
+    // opaque application-error screen. Do not create a partial session; give
+    // the deployment owner the one setting that needs attention instead.
+    if (error instanceof SessionConfigurationError) {
+      return { error: error.message, email: typedEmail }
+    }
+    throw error
+  }
 
   // Drops the client router cache for the admin subtree, so the shell that
   // renders next is the signed-in one and not a cached gate.
