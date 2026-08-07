@@ -69,9 +69,11 @@ export function CartBadge({ label = 'Basket', className }: CartBadgeProps) {
       data-filled={count > 0 ? 'true' : 'false'}
     >
       <span className="label cbg__word">{label}</span>
-      <span className="mono cbg__n" aria-hidden="true">
-        {count}
-      </span>
+      {count > 0 ? (
+        <span className="mono cbg__n" aria-hidden="true">
+          {count}
+        </span>
+      ) : null}
       <span className="vh">
         {count === 0 ? ', empty' : `, ${count} ${count === 1 ? 'item' : 'items'}`}
       </span>

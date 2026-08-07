@@ -838,10 +838,11 @@
    -------------------------------------------------------------------------- */
 
 .cbg {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
+  min-height: 40px;
+  padding: 10px 14px 10px 0;
   color: var(--tape);
   transition: color var(--t-quick) var(--ease-gear);
 }
@@ -854,28 +855,29 @@
   color: inherit;
 }
 
-/* A count in a hairline box, not a filled dot: this site separates by rule,
-   never by blob. It holds its width at one and two digits so the nav does not
-   reflow when a second item goes in. */
+/* The empty basket reads as its label alone. Once it has items, the count is a
+   small instrument light at the top-right — visible without making BASKET 0
+   look like a product code. */
 .cbg__n {
+  position: absolute;
+  top: 3px;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  padding: 3px 5px;
-  border: var(--hair) solid var(--score);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: var(--hair) solid color-mix(in srgb, var(--lamp) 40%, var(--score));
+  border-radius: 50%;
+  background: var(--lamp-ghost);
   font-variant-numeric: tabular-nums;
+  font-size: 0.625rem;
   line-height: 1;
-  color: var(--dust);
+  color: var(--lamp);
   transition:
     border-color var(--t-quick) var(--ease-gear),
     color var(--t-quick) var(--ease-gear);
-}
-
-.cbg[data-filled='true'] .cbg__n {
-  border-color: color-mix(in srgb, var(--lamp) 40%, var(--score));
-  background: var(--lamp-ghost);
-  color: var(--lamp);
 }
 
 .cbg:hover .cbg__n {

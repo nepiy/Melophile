@@ -21,6 +21,8 @@ export type ReleaseCardProps = {
   priority?: boolean
   /** Provide to make the card a button that opens the detail dialog in place. */
   onOpen?: (release: ReleaseFull) => void
+  /** A visual repeat inside the moving home-page rail — never focusable. */
+  decorative?: boolean
 }
 
 function CardBody({ release }: { release: ReleaseFull }) {
@@ -57,7 +59,15 @@ function CardBody({ release }: { release: ReleaseFull }) {
   )
 }
 
-export function ReleaseCard({ release, onOpen }: ReleaseCardProps) {
+export function ReleaseCard({ release, onOpen, decorative = false }: ReleaseCardProps) {
+  if (decorative) {
+    return (
+      <div className="rel" aria-hidden="true">
+        <CardBody release={release} />
+      </div>
+    )
+  }
+
   if (onOpen) {
     return (
       <button type="button" className="rel" onClick={() => onOpen(release)}>

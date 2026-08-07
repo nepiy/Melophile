@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Hero } from '@/components/hero/Hero'
-import { ReleaseCard } from '@/components/music/ReleaseCard'
+import { ArtistRail } from '@/components/home/ArtistRail'
+import { MusicRail } from '@/components/home/MusicRail'
 import { ContactDetails } from '@/components/site/ContactDetails'
 import { Reveal } from '@/components/site/Reveal'
 import { SectionHead } from '@/components/site/SectionHead'
@@ -8,6 +9,7 @@ import { ServiceIcon } from '@/components/site/ServiceIcon'
 import { labelCode } from '@/lib/format'
 import {
   getContact,
+  getArtists,
   getHome,
   getRecentReleases,
   getServices,
@@ -19,16 +21,17 @@ import '@/styles/home.css'
 
 /* ==========================================================================
    Home. The scroll order is fixed by the client and built in exactly this
-   order: hero → music → services → contact.
+   order: hero → music → artists → services → contact.
 
    Every heading, intro line and button label on this page comes from the
    `home` table. There is not one user-visible English string hard-coded here.
    ========================================================================== */
 
 export default async function HomePage() {
-  const [settings, home, services, contact] = await Promise.all([
+  const [settings, home, artists, services, contact] = await Promise.all([
     getSiteSettings(),
     getHome(),
+    getArtists(),
     getServices(),
     getContact(),
   ])
@@ -75,25 +78,47 @@ export default async function HomePage() {
               </p>
             </div>
           ) : (
-            <ul className="home-music" data-count={releases.length}>
-              {releases.map((release, i) => (
-                <Reveal as="li" key={release.id} index={i} className="home-music__item">
-                  <ReleaseCard
-                    release={release}
-                    sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 23vw"
-                  />
-                </Reveal>
-              ))}
-            </ul>
+            <MusicRail releases={releases} />
           )}
         </div>
       </section>
 
-      {/* 3 — OUR SERVICES */}
-      <section className="sec" id="services" aria-labelledby="services-heading">
+      {/* 3 — ARTISTS */}
+      <section className="sec" id="artists" aria-labelledby="artists-heading">
         <div className="shell">
           <SectionHead
             channel="03"
+            label={settings.navArtists}
+            heading={settings.navArtists}
+            id="artists-heading"
+            aside={
+              artists.length > 0 ? (
+                <Link href="/artists" className="arrow-link">
+                  Meet the artists
+                  <span className="arrow-link__line" aria-hidden="true" />
+                </Link>
+              ) : null
+            }
+          />
+
+          {artists.length === 0 ? (
+            <div className="empty">
+              <p className="empty__title">No artists published yet</p>
+              <p className="empty__text">
+                Add the first artist from the admin and they will appear here.
+              </p>
+            </div>
+          ) : (
+            <ArtistRail artists={artists} />
+          )}
+        </div>
+      </section>
+
+      {/* 4 — OUR SERVICES */}
+      <section className="sec" id="services" aria-labelledby="services-heading">
+        <div className="shell">
+          <SectionHead
+            channel="04"
             label="Services"
             heading={home.servicesHeading}
             intro={home.servicesIntro}
@@ -124,11 +149,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4 — CONTACT */}
+      {/* 6 — CONTACT */}
       <section className="sec" id="contact" aria-labelledby="contact-heading">
         <div className="shell">
           <SectionHead
-            channel="04"
+            channel="06"
             label="Contact"
             heading={home.contactHeading}
             id="contact-heading"

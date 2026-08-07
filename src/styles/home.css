@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Home sections 2–4.
+   Home sections 2–6.
 
    The release card and the contact detail block used to live here, which was a
    bug: both are rendered by components shared with /music, /artists and
@@ -9,35 +9,170 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Section 2 — music grid. Four across, and the art is allowed to be big.
+   Section 2 — music rail. A slow, pausable sleeve transport rather than a
+   carousel: the repeated visual set gives it a seamless loop, while only the
+   first set is interactive and announced to assistive technology.
    -------------------------------------------------------------------------- */
 
-.home-music {
-  display: grid;
-  gap: var(--gap) var(--gap);
-  grid-template-columns: 1fr;
+.home-music-motion {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 
-@media (min-width: 560px) {
-  .home-music {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.home-music-motion__track,
+.home-music-motion__set {
+  display: flex;
+}
+
+.home-music-motion__track {
+  width: max-content;
+  animation: home-music-transport var(--home-music-cycle) linear infinite;
+}
+
+.home-music-motion__set {
+  gap: var(--gap);
+  padding-right: var(--gap);
+}
+
+.home-music-motion__item {
+  flex: 0 0 clamp(220px, 23vw, 300px);
+}
+
+/* A half-degree alternation catches the light without turning the catalogue
+   into a spinning carousel. The rail itself supplies the movement. */
+.home-music-motion__item:nth-child(odd) {
+  transform: rotate(-0.45deg);
+}
+
+.home-music-motion__item:nth-child(even) {
+  transform: rotate(0.45deg);
+}
+
+.home-music-motion:hover .home-music-motion__track,
+.home-music-motion:focus-within .home-music-motion__track {
+  animation-play-state: paused;
+}
+
+@keyframes home-music-transport {
+  to {
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
-@media (min-width: 1000px) {
-  .home-music {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (prefers-reduced-motion: reduce) {
+  .home-music-motion {
+    overflow-x: auto;
+    mask-image: none;
   }
 
-  /* 5–8 featured entries wrap to a second row rather than shrinking the art. */
-  .home-music[data-count='5'],
-  .home-music[data-count='6'] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .home-music-motion__track {
+    width: auto;
+    animation: none;
+  }
+
+  .home-music-motion__set[aria-hidden='true'] {
+    display: none;
+  }
+
+  .home-music-motion__item {
+    transform: none;
   }
 }
 
 /* --------------------------------------------------------------------------
-   Section 3 — services. Hairline-divided cells, not cards.
+   Section 3 — artists. The same rail language as the catalogue, with portrait
+   crops so the roster is recognisable before the visitor opens it.
+   -------------------------------------------------------------------------- */
+
+.home-artist-motion {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.home-artist-motion__track,
+.home-artist-motion__set {
+  display: flex;
+}
+
+.home-artist-motion__track {
+  width: max-content;
+  animation: home-artist-transport var(--home-artist-cycle) linear infinite reverse;
+}
+
+.home-artist-motion__set {
+  gap: var(--gap);
+  padding-right: var(--gap);
+}
+
+.home-artist-motion__item {
+  flex: 0 0 clamp(190px, 19vw, 240px);
+}
+
+.home-artist-card {
+  display: block;
+  color: var(--tape);
+}
+
+.home-artist-card__art.img {
+  aspect-ratio: 4 / 5;
+}
+
+.home-artist-card__art .img__el {
+  filter: saturate(0.3) contrast(1.04) brightness(0.88);
+  transition: filter var(--t-ease) var(--ease-gear);
+}
+
+.home-artist-card:hover .img__el,
+.home-artist-card:focus-visible .img__el {
+  filter: saturate(1) contrast(1) brightness(1);
+}
+
+.home-artist-card__meta {
+  padding-top: 10px;
+}
+
+.home-artist-card__name {
+  font-size: var(--fs-h3);
+  font-variation-settings:
+    'wdth' 104,
+    'wght' 600;
+}
+
+.home-artist-card__role {
+  margin-top: 4px;
+  color: var(--dust);
+  font-size: 0.6875rem;
+}
+
+.home-artist-motion:hover .home-artist-motion__track,
+.home-artist-motion:focus-within .home-artist-motion__track {
+  animation-play-state: paused;
+}
+
+@keyframes home-artist-transport {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-artist-motion {
+    overflow-x: auto;
+    mask-image: none;
+  }
+
+  .home-artist-motion__track {
+    width: auto;
+    animation: none;
+  }
+
+  .home-artist-motion__set[aria-hidden='true'] {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Section 4 — services. Hairline-divided cells, not cards.
    -------------------------------------------------------------------------- */
 
 .svc {
@@ -85,7 +220,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Section 4 — contact. Reads the same row as /contact.
+   Section 6 — contact. Reads the same row as /contact.
    -------------------------------------------------------------------------- */
 
 .home-contact {
