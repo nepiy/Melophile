@@ -29,11 +29,16 @@ export function Reveal({
   rootMargin = '0px 0px -12% 0px',
 }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null)
-  const [shown, setShown] = useState(false)
+  // Route content must be useful on its first paint. A scroll reveal that
+  // starts hidden makes every navigation look like it paused, so this is
+  // visible from the server render onward.
+  const [shown, setShown] = useState(true)
 
   useEffect(() => {
     const node = ref.current
     if (!node) return
+
+    if (shown) return
 
     if (
       typeof window === 'undefined' ||
@@ -66,7 +71,7 @@ export function Reveal({
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [rootMargin])
+  }, [rootMargin, shown])
 
   return (
     <Tag

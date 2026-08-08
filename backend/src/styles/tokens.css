@@ -138,10 +138,12 @@
   /* ---------------------------------------------------------------------
      MOTION — four durations, three easings, named for what they do.
      --------------------------------------------------------------------- */
-  --t-flick: 90ms; /* a relay closing: lock transient, button press */
-  --t-quick: 180ms; /* hover, focus, filter change */
-  --t-ease: 20ms; /* scroll reveal, dialog open — intentionally imperceptible */
-  --t-settle: 900ms; /* the span a staggered group takes end to end */
+  /* Navigation and interface changes are immediate. The site keeps its visual
+     design, but no transition is allowed to make a route feel slower. */
+  --t-flick: 0ms;
+  --t-quick: 0ms;
+  --t-ease: 0ms;
+  --t-settle: 0ms;
 
   --ease-gear: cubic-bezier(0.16, 1, 0.3, 1); /* decelerating, mechanical */
   --ease-transient: cubic-bezier(0.2, 0.9, 0.1, 1); /* stiff, overshoot-capable */

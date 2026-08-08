@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { AccountMenu } from '@/components/account/AccountMenu'
 import { CartBadge } from '@/components/cart/CartBadge'
@@ -31,6 +31,7 @@ export type NavProps = {
 /* /admin is deliberately absent from this list and from the footer. */
 export function Nav({ logoText, labels, bookLabel }: NavProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [lifted, setLifted] = useState(false)
 
@@ -42,6 +43,8 @@ export function Nav({ logoText, labels, bookLabel }: NavProps) {
     { href: '/about', label: labels.about },
     { href: '/contact', label: labels.contact },
   ]
+
+  const warmRoute = (href: string) => router.prefetch(href)
 
   // Close the menu on navigation. Without this, tapping a link on mobile
   // leaves the sheet open over the new page.
@@ -68,7 +71,13 @@ export function Nav({ logoText, labels, bookLabel }: NavProps) {
   return (
     <header className="nav" data-lifted={lifted ? 'true' : 'false'} data-open={open}>
       <div className="nav__inner">
-        <Link href="/" className="nav__logo" aria-label={`${logoText} — home`}>
+        <Link
+          href="/"
+          className="nav__logo"
+          aria-label={`${logoText} — home`}
+          onMouseEnter={() => warmRoute('/')}
+          onFocus={() => warmRoute('/')}
+        >
           <span className="nav__logo-text">{logoText}</span>
           {/* The REC indicator from the hero, kept alive in the bar. It is the
               one piece of instrumentation that persists across every page. */}
@@ -103,6 +112,9 @@ export function Nav({ logoText, labels, bookLabel }: NavProps) {
                     href={item.href}
                     className="nav__link label"
                     aria-current={active ? 'page' : undefined}
+                    prefetch
+                    onMouseEnter={() => warmRoute(item.href)}
+                    onFocus={() => warmRoute(item.href)}
                   >
                     {item.label}
                   </Link>
@@ -119,7 +131,13 @@ export function Nav({ logoText, labels, bookLabel }: NavProps) {
               <AccountMenu />
             </li>
             <li className="nav__book">
-              <Link href="/contact#book" className="btn btn--ghost">
+              <Link
+                href="/contact#book"
+                className="btn btn--ghost"
+                prefetch
+                onMouseEnter={() => warmRoute('/contact')}
+                onFocus={() => warmRoute('/contact')}
+              >
                 {bookLabel}
               </Link>
             </li>
