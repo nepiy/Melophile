@@ -24,9 +24,18 @@ function compat<T extends object>(target: T): T {
       if (typeof value !== 'function') return value
       return (...args: unknown[]) => {
         const result = value.apply(current, args)
-        return result && typeof result === 'object' && typeof (result as any).execute === 'function'
-          ? compat(result)
-          : result
+        // Drizzle's fluent builders change concrete class after calls such as
+        // .from(), .where(), and .limit(). Wrap every non-Promise object so
+        // the SQLite compatibility helpers remain available at the end of
+        // any PostgreSQL query chain.
+        if (
+          result &&
+          typeof result === 'object' &&
+          typeof (result as any).then !== 'function'
+        ) {
+          return compat(result)
+        }
+        return result
       }
     },
   })
