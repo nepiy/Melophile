@@ -2,20 +2,12 @@
  * Applies the generated SQL migrations. Safe to run repeatedly.
  *   npm run db:migrate
  */
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { adminUsers, db, resolveDbPath } from './index'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { adminUsers, db } from './index'
 import { describePasswordProblem, hashPassword } from '../lib/auth'
 
-const folder = resolve(process.cwd(), 'src/db/migrations')
-
-if (!existsSync(folder)) {
-  console.error(
-    `No migrations found at ${folder}.\nRun "npm run db:generate" first to create them from src/db/schema.ts.`,
-  )
-  process.exit(1)
-}
+const folder = resolve(process.cwd(), 'src/db/pg-migrations')
 
 async function createInitialAdmin(): Promise<void> {
   // Railway runs migrations on an empty volume but does not run the optional
@@ -50,9 +42,9 @@ async function createInitialAdmin(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  migrate(db, { migrationsFolder: folder })
+  await migrate(db as any, { migrationsFolder: folder })
   await createInitialAdmin()
-  console.log(`Database ready at ${resolveDbPath()}`)
+  console.log('PostgreSQL database ready.')
 }
 
 main().catch((error) => {

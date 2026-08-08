@@ -1,12 +1,5 @@
 import { relations } from 'drizzle-orm'
-import {
-  index,
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-  unique,
-} from 'drizzle-orm/sqlite-core'
+import { boolean, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 /* ------------------------------------------------------------------ *
  * Shared shapes
@@ -71,8 +64,8 @@ export const STREAMING_PLATFORMS = [
  * intrinsic dimensions and can never cause layout shift. `alt` is captured
  * at upload time because retrofitting alt text never happens.
  */
-export const images = sqliteTable('images', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const images = pgTable('images', {
+  id: serial('id').primaryKey(),
   path: text('path').notNull(), // public path, e.g. /uploads/ab12cd.webp
   width: integer('width').notNull(),
   height: integer('height').notNull(),
@@ -80,15 +73,15 @@ export const images = sqliteTable('images', {
   mimeType: text('mime_type').notNull(),
   bytes: integer('bytes').notNull(),
   /** Marks seeded procedural placeholder art. Shown in the admin only. */
-  isPlaceholder: integer('is_placeholder', { mode: 'boolean' }).notNull().default(false),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  isPlaceholder: boolean('is_placeholder').notNull().default(false),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
 /* ------------------------------------------------------------------ *
  * Singletons — always exactly one row, id = 1
  * ------------------------------------------------------------------ */
 
-export const siteSettings = sqliteTable('site_settings', {
+export const siteSettings = pgTable('site_settings', {
   id: integer('id').primaryKey().default(1),
   logoText: text('logo_text').notNull().default('MELOPHILE'),
   navMusic: text('nav_music').notNull().default('Music'),
@@ -98,20 +91,20 @@ export const siteSettings = sqliteTable('site_settings', {
   navStore: text('nav_store').notNull().default('Store'),
   navEvents: text('nav_events').notNull().default('Events'),
   footerText: text('footer_text').notNull().default(''),
-  socialLinks: text('social_links', { mode: 'json' })
+  socialLinks: jsonb('social_links')
     .$type<SocialItem[]>()
     .notNull()
     .default([]),
   metaTitle: text('meta_title').notNull().default('Melophile Records'),
   metaDescription: text('meta_description').notNull().default(''),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
 /**
  * Every user-visible string on the home page. If a heading or a call to
  * action appears on `/`, it is a column here — not a literal in a component.
  */
-export const home = sqliteTable('home', {
+export const home = pgTable('home', {
   id: integer('id').primaryKey().default(1),
   wordmarkLine1: text('wordmark_line1').notNull().default('MELOPHILE'),
   wordmarkLine2: text('wordmark_line2').notNull().default('RECORDS'),
@@ -126,29 +119,29 @@ export const home = sqliteTable('home', {
   contactCta: text('contact_cta').notNull().default('Book the studio'),
   /** How many of the most recent releases section 2 shows. Clamped 4–8. */
   featuredCount: integer('featured_count').notNull().default(4),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
-export const about = sqliteTable('about', {
+export const about = pgTable('about', {
   id: integer('id').primaryKey().default(1),
   heading: text('heading').notNull().default('Our story'),
   /** Markdown. Rendered to React elements, never to an HTML string. */
   body: text('body').notNull().default(''),
   foundedYear: integer('founded_year'),
-  showCatalogCount: integer('show_catalog_count', { mode: 'boolean' })
+  showCatalogCount: boolean('show_catalog_count')
     .notNull()
     .default(true),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
-export const contact = sqliteTable('contact', {
+export const contact = pgTable('contact', {
   id: integer('id').primaryKey().default(1),
   /** Newline-separated. Rendered one line per line, or omitted if blank. */
   addressLines: text('address_lines').notNull().default(''),
-  emails: text('emails', { mode: 'json' }).$type<EmailItem[]>().notNull().default([]),
+  emails: jsonb('emails').$type<EmailItem[]>().notNull().default([]),
   phone: text('phone').notNull().default(''),
   hours: text('hours').notNull().default(''),
-  socialLinks: text('social_links', { mode: 'json' })
+  socialLinks: jsonb('social_links')
     .$type<SocialItem[]>()
     .notNull()
     .default([]),
@@ -158,28 +151,28 @@ export const contact = sqliteTable('contact', {
   bookingIntro: text('booking_intro').notNull().default(''),
   bookingSuccessMessage: text('booking_success_message').notNull().default(''),
   responseTime: text('response_time').notNull().default('within two working days'),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
 /* ------------------------------------------------------------------ *
  * Catalogue
  * ------------------------------------------------------------------ */
 
-export const artists = sqliteTable(
+export const artists = pgTable(
   'artists',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     slug: text('slug').notNull(),
     name: text('name').notNull(),
     photoId: integer('photo_id').references(() => images.id, { onDelete: 'set null' }),
     /** Markdown. Revealed only after a click, never on the grid. */
     shortDescription: text('short_description').notNull().default(''),
     role: text('role').notNull().default(''),
-    links: text('links', { mode: 'json' }).$type<LinkItem[]>().notNull().default([]),
+    links: jsonb('links').$type<LinkItem[]>().notNull().default([]),
     status: text('status').$type<PublishStatus>().notNull().default('draft'),
     order: integer('order').notNull().default(0),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [
     unique('artists_slug_unique').on(t.slug),
@@ -187,10 +180,10 @@ export const artists = sqliteTable(
   ],
 )
 
-export const releases = sqliteTable(
+export const releases = pgTable(
   'releases',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     slug: text('slug').notNull(),
     title: text('title').notNull(),
     /** Primary artist. Features live in release_artists. */
@@ -204,18 +197,18 @@ export const releases = sqliteTable(
     catalogNumber: text('catalog_number').notNull().default(''),
     /** Markdown. */
     description: text('description').notNull().default(''),
-    tracklist: text('tracklist', { mode: 'json' }).$type<Track[]>().notNull().default([]),
+    tracklist: jsonb('tracklist').$type<Track[]>().notNull().default([]),
     /** Markdown. */
     credits: text('credits').notNull().default(''),
-    streamingLinks: text('streaming_links', { mode: 'json' })
+    streamingLinks: jsonb('streaming_links')
       .$type<StreamingLink[]>()
       .notNull()
       .default([]),
-    featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+    featured: boolean('featured').notNull().default(false),
     status: text('status').$type<PublishStatus>().notNull().default('draft'),
     order: integer('order').notNull().default(0),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [
     unique('releases_slug_unique').on(t.slug),
@@ -229,7 +222,7 @@ export const releases = sqliteTable(
  * Guests and features. The artist page's "Appears on" list is the union of
  * `releases.artistId` and this table — so a release is never written twice.
  */
-export const releaseArtists = sqliteTable(
+export const releaseArtists = pgTable(
   'release_artists',
   {
     releaseId: integer('release_id')
@@ -243,16 +236,16 @@ export const releaseArtists = sqliteTable(
   (t) => [primaryKey({ columns: [t.releaseId, t.artistId] })],
 )
 
-export const services = sqliteTable(
+export const services = pgTable(
   'services',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     title: text('title').notNull(),
     description: text('description').notNull().default(''),
     icon: text('icon').$type<ServiceIcon>().notNull().default('waveform'),
     status: text('status').$type<PublishStatus>().notNull().default('draft'),
     order: integer('order').notNull().default(0),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [index('services_order_idx').on(t.order)],
 )
@@ -261,10 +254,10 @@ export const services = sqliteTable(
  * Photo slots for /about. Zero rows is a supported, designed state: the
  * public page drops the photo column from the DOM entirely.
  */
-export const aboutPhotos = sqliteTable(
+export const aboutPhotos = pgTable(
   'about_photos',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     imageId: integer('image_id').references(() => images.id, { onDelete: 'set null' }),
     caption: text('caption').notNull().default(''),
     order: integer('order').notNull().default(0),
@@ -276,10 +269,10 @@ export const aboutPhotos = sqliteTable(
  * Bookings — written by the public form, read in the admin
  * ------------------------------------------------------------------ */
 
-export const bookings = sqliteTable(
+export const bookings = pgTable(
   'bookings',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     name: text('name').notNull(),
     email: text('email').notNull(),
     phone: text('phone').notNull().default(''),
@@ -299,10 +292,10 @@ export const bookings = sqliteTable(
      * fails this stays false and the admin list flags it, so nobody is ever
      * told "sent" when nothing was sent.
      */
-    notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
+    notified: boolean('notified').notNull().default(false),
     notifyError: text('notify_error').notNull().default(''),
     ip: text('ip').notNull().default(''),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   },
   (t) => [
     index('bookings_created_idx').on(t.createdAt),
@@ -311,10 +304,10 @@ export const bookings = sqliteTable(
 )
 
 /** Dates the client marks unavailable. Enforced in the browser and on the server. */
-export const blackouts = sqliteTable(
+export const blackouts = pgTable(
   'blackouts',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     date: text('date').notNull(), // 'YYYY-MM-DD'
     reason: text('reason').notNull().default(''),
   },
@@ -325,45 +318,45 @@ export const blackouts = sqliteTable(
  * Auth
  * ------------------------------------------------------------------ */
 
-export const adminUsers = sqliteTable(
+export const adminUsers = pgTable(
   'admin_users',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     email: text('email').notNull(),
     /** scrypt, from node:crypto. No auth dependency. */
     passwordHash: text('password_hash').notNull(),
     passwordSalt: text('password_salt').notNull(),
     /** Set when seeded with the default password; the admin nags until changed. */
-    mustChangePassword: integer('must_change_password', { mode: 'boolean' })
+    mustChangePassword: boolean('must_change_password')
       .notNull()
       .default(false),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    lastLoginAt: integer('last_login_at', { mode: 'timestamp_ms' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
   },
   (t) => [unique('admin_users_email_unique').on(t.email)],
 )
 
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   'sessions',
   {
     id: text('id').primaryKey(), // sha256 of the cookie token; the raw token is never stored
     userId: integer('user_id')
       .notNull()
       .references(() => adminUsers.id, { onDelete: 'cascade' }),
-    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   },
   (t) => [index('sessions_user_idx').on(t.userId)],
 )
 
-export const loginAttempts = sqliteTable(
+export const loginAttempts = pgTable(
   'login_attempts',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     /** ip + ':' + lowercased email */
     key: text('key').notNull(),
-    at: integer('at', { mode: 'timestamp_ms' }).notNull(),
-    ok: integer('ok', { mode: 'boolean' }).notNull(),
+    at: timestamp('at', { mode: 'date' }).notNull(),
+    ok: boolean('ok').notNull(),
   },
   (t) => [index('login_attempts_key_idx').on(t.key, t.at)],
 )
@@ -444,10 +437,10 @@ export type PreviewKind = (typeof PREVIEW_KINDS)[number]
 /** A merch size or colour. Stock is text so "2 left" and "made to order" both work. */
 export type Variant = { label: string; sku: string; stock: string }
 
-export const products = sqliteTable(
+export const products = pgTable(
   'products',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     kind: text('kind').$type<ProductKind>().notNull(),
     slug: text('slug').notNull(),
     title: text('title').notNull(),
@@ -481,21 +474,21 @@ export const products = sqliteTable(
     musicalKey: text('musical_key').notNull().default(''),
 
     /* --- merch only --- */
-    variants: text('variants', { mode: 'json' }).$type<Variant[]>().notNull().default([]),
+    variants: jsonb('variants').$type<Variant[]>().notNull().default([]),
 
     /** Null means unlimited. 0 means sold out. */
     stock: integer('stock'),
 
     /** Digital goods are delivered by link the moment an order is paid. */
-    digital: integer('digital', { mode: 'boolean' }).notNull().default(false),
+    digital: boolean('digital').notNull().default(false),
     /** Revealed only on a paid order. Never rendered on a public page. */
     downloadUrl: text('download_url').notNull().default(''),
 
-    featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+    featured: boolean('featured').notNull().default(false),
     status: text('status').$type<PublishStatus>().notNull().default('draft'),
     order: integer('order').notNull().default(0),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [
     unique('products_slug_unique').on(t.slug),
@@ -508,10 +501,10 @@ export const products = sqliteTable(
  * EVENTS
  * ==================================================================== */
 
-export const events = sqliteTable(
+export const events = pgTable(
   'events',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     slug: text('slug').notNull(),
     title: text('title').notNull(),
     /** Markdown. */
@@ -536,8 +529,8 @@ export const events = sqliteTable(
 
     status: text('status').$type<PublishStatus>().notNull().default('draft'),
     order: integer('order').notNull().default(0),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [unique('events_slug_unique').on(t.slug), index('events_date_idx').on(t.date)],
 )
@@ -558,10 +551,10 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export const ORDER_ITEM_KINDS = ['merch', 'music', 'beat', 'ticket'] as const
 export type OrderItemKind = (typeof ORDER_ITEM_KINDS)[number]
 
-export const orders = sqliteTable(
+export const orders = pgTable(
   'orders',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     /** Human-quotable, e.g. MLPHL-4K2Q7. What the customer reads out on email. */
     reference: text('reference').notNull(),
 
@@ -581,20 +574,20 @@ export const orders = sqliteTable(
     /** 'stripe' once a session exists, 'none' while Stripe is unconfigured. */
     paymentProvider: text('payment_provider').notNull().default('none'),
     stripeSessionId: text('stripe_session_id').notNull().default(''),
-    paidAt: integer('paid_at', { mode: 'timestamp_ms' }),
+    paidAt: timestamp('paid_at', { mode: 'date' }),
 
     /**
      * Same contract as a booking: the order is committed before the email is
      * attempted, and a failure is recorded here rather than thrown. Nobody is
      * ever told "sent" when nothing was sent.
      */
-    notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
+    notified: boolean('notified').notNull().default(false),
     notifyError: text('notify_error').notNull().default(''),
 
     adminNote: text('admin_note').notNull().default(''),
     ip: text('ip').notNull().default(''),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
   },
   (t) => [
     unique('orders_reference_unique').on(t.reference),
@@ -610,10 +603,10 @@ export const orders = sqliteTable(
  * charged last month. The product/event references are kept for convenience
  * and are allowed to go null; the snapshot is what the order actually is.
  */
-export const orderItems = sqliteTable(
+export const orderItems = pgTable(
   'order_items',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     orderId: integer('order_id')
       .notNull()
       .references(() => orders.id, { onDelete: 'cascade' }),
@@ -635,7 +628,7 @@ export const orderItems = sqliteTable(
  * Page copy for the two new sections — singletons, id = 1
  * ==================================================================== */
 
-export const storePage = sqliteTable('store_page', {
+export const storePage = pgTable('store_page', {
   id: integer('id').primaryKey().default(1),
   heading: text('heading').notNull().default('Store'),
   intro: text('intro').notNull().default(''),
@@ -654,16 +647,16 @@ export const storePage = sqliteTable('store_page', {
   shippingNote: text('shipping_note').notNull().default(''),
   checkoutNote: text('checkout_note').notNull().default(''),
   successMessage: text('success_message').notNull().default(''),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
-export const eventsPage = sqliteTable('events_page', {
+export const eventsPage = pgTable('events_page', {
   id: integer('id').primaryKey().default(1),
   heading: text('heading').notNull().default('Events'),
   intro: text('intro').notNull().default(''),
   emptyMessage: text('empty_message').notNull().default(''),
   pastHeading: text('past_heading').notNull().default('Previously'),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
 /* ------------------------------ relations ------------------------------ */

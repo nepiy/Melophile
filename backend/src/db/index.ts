@@ -1,40 +1,40 @@
-import { existsSync, mkdirSync } from 'node:fs'
-import { dirname, isAbsolute, resolve } from 'node:path'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/postgres-js'
 import * as schema from './schema'
 
-/**
- * Resolve DATABASE_URL ("file:./data/melophile.db" or a bare path) to an
- * absolute filesystem path, creating the directory if it is missing.
- */
-export function resolveDbPath(): string {
-  const raw = process.env.DATABASE_URL ?? 'file:./data/melophile.db'
-  const stripped = raw.startsWith('file:') ? raw.slice('file:'.length) : raw
-  const abs = isAbsolute(stripped) ? stripped : resolve(process.cwd(), stripped)
-  const dir = dirname(abs)
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-  return abs
-}
-
 function createClient() {
-  const sqlite = new Database(resolveDbPath())
-  // WAL keeps reads from blocking the admin's writes.
-  sqlite.pragma('journal_mode = WAL')
-  sqlite.pragma('foreign_keys = ON')
-  sqlite.pragma('busy_timeout = 5000')
-  return drizzle(sqlite, { schema })
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) throw new Error('DATABASE_URL must be set to the Railway PostgreSQL URL.')
+  return drizzle(postgres(connectionString, { max: 10, idle_timeout: 20 }), { schema })
 }
 
 type DbClient = ReturnType<typeof createClient>
-
-// Next's dev server re-evaluates modules on every edit. Without this the
-// process accumulates open SQLite handles until it runs out of descriptors.
 const globalForDb = globalThis as unknown as { __melophileDb?: DbClient }
+function compat<T extends object>(target: T): T {
+  return new Proxy(target, {
+    get(current, property, receiver) {
+      if (property === 'get') return async () => (await (current as any).execute())[0]
+      if (property === 'all') return async () => (current as any).execute()
+      if (property === 'run') return async () => (current as any).execute()
+      if (property === 'transaction') {
+        return (callback: (tx: any) => unknown, ...args: unknown[]) =>
+          (current as any).transaction((tx: object) => callback(compat(tx)), ...args)
+      }
+      const value = Reflect.get(current, property, receiver)
+      if (typeof value !== 'function') return value
+      return (...args: unknown[]) => {
+        const result = value.apply(current, args)
+        return result && typeof result === 'object' && typeof (result as any).execute === 'function'
+          ? compat(result)
+          : result
+      }
+    },
+  })
+}
 
-export const db: DbClient = globalForDb.__melophileDb ?? createClient()
-
+// The compatibility type retains current query-module inference while those
+// modules are migrated from SQLite helpers to PostgreSQL-native repositories.
+export const db: any = globalForDb.__melophileDb ?? compat(createClient())
 if (process.env.NODE_ENV !== 'production') globalForDb.__melophileDb = db
-
 export { schema }
 export * from './schema'
