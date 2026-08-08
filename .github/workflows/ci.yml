@@ -23,10 +23,14 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci --prefix backend
+          npm install --prefix frontend
 
       - name: Type check
-        run: npm run typecheck
+        run: |
+          npm run typecheck --prefix frontend
+          npm run typecheck --prefix backend
 
       - name: Content checks
         run: npm run check --workspace backend
@@ -35,4 +39,6 @@ jobs:
         run: npm run db:migrate --workspace backend
 
       - name: Build
-        run: npm run build
+        run: |
+          npm run build --prefix frontend
+          npm run build --prefix backend
