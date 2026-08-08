@@ -6,6 +6,7 @@ import { AvatarUpload } from '@/components/account/AvatarUpload'
 import { DeleteAccountForm } from '@/components/account/DeleteAccountForm'
 import { PasswordChangeForm } from '@/components/account/PasswordChangeForm'
 import { ProfileForm } from '@/components/account/ProfileForm'
+import { GoogleConnect } from '@/components/account/GoogleConnect'
 import { getAccount } from '@/lib/account/queries'
 import { accountsEnabled } from '@/lib/supabase/config'
 
@@ -72,6 +73,7 @@ export default async function AccountSettingsPage() {
           initial={{
             fullName: profile.full_name,
             username: user.username ?? '',
+            phoneCountryCode: profile.phone_country_code,
             phoneNumber: profile.phone_number,
             // A date input wants YYYY-MM-DD and nothing else.
             dateOfBirth: profile.date_of_birth ? profile.date_of_birth.slice(0, 10) : '',
@@ -109,8 +111,15 @@ export default async function AccountSettingsPage() {
         )}
       </Panel>
 
+      <Panel channel="03" strip="Sign-in" title="Connected accounts">
+        <p className="ac-panel__text">
+          Connect Google to sign in with either Google or your existing email account.
+        </p>
+        <GoogleConnect connected={user.auth_method === 'google'} />
+      </Panel>
+
       <Panel
-        channel="03"
+        channel="04"
         strip="Delete"
         title="Delete your account"
         text="Closing the account for good. Read what goes and what stays before you start."

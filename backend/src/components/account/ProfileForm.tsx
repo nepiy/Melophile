@@ -34,6 +34,7 @@ const GENDERS = [
 export type ProfileFormValues = {
   fullName: string
   username: string
+  phoneCountryCode: string
   phoneNumber: string
   dateOfBirth: string
   gender: string
@@ -59,6 +60,7 @@ function messagesFrom(
 const ORDER = [
   'fullName',
   'username',
+  'phoneCountryCode',
   'phoneNumber',
   'dateOfBirth',
   'gender',
@@ -201,6 +203,33 @@ export function ProfileForm({ initial }: { initial: ProfileFormValues }) {
       </div>
 
       <div className="ac-pair">
+        <div className="au-field">
+          <label className="label au-field__label" htmlFor={`${uid}-phoneCountryCode`}>
+            Country code
+          </label>
+          <span className="ac-select-wrap">
+            <select
+              id={`${uid}-phoneCountryCode`}
+              name="phoneCountryCode"
+              className="au-box ac-select au-box--mono"
+              value={values.phoneCountryCode}
+              ref={hold('phoneCountryCode')}
+              aria-invalid={Boolean(errors.phoneCountryCode)}
+              aria-describedby={describe('phoneCountryCode', false)}
+              onChange={(event) =>
+                setValue('phoneCountryCode', event.currentTarget.value)
+              }
+              onBlur={() => checkOne('phoneCountryCode', values)}
+            >
+              <option value="+1">United States / Canada (+1)</option>
+              <option value="+44">United Kingdom (+44)</option>
+              <option value="+61">Australia (+61)</option>
+              <option value="+91">India (+91)</option>
+              <option value="+977">Nepal (+977)</option>
+            </select>
+          </span>
+          {err('phoneCountryCode')}
+        </div>
         <div className="au-field">
           <label className="label au-field__label" htmlFor={`${uid}-phoneNumber`}>
             Phone

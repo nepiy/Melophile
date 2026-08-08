@@ -3,6 +3,8 @@ import { CheckoutForm } from '@/components/cart/CheckoutForm'
 import { SectionHead } from '@/components/site/SectionHead'
 import { stripeConfigured } from '@/lib/payments'
 import { getStorePage } from '@/lib/store-data'
+import { getAccount, getAddresses } from '@/lib/account/queries'
+import { accountsEnabled } from '@/lib/supabase/config'
 
 import '@/styles/cart.css'
 
@@ -26,6 +28,20 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const page = await getStorePage()
+  const account = accountsEnabled() ? await getAccount() : null
+  const addresses = account ? await getAddresses(account.user.id) : []
+  const address = addresses.find((item) => item.is_default) ?? addresses[0]
+  const deliveryAddress = address
+    ? [
+        address.recipient,
+        address.street_address,
+        [address.city, address.state].filter(Boolean).join(', '),
+        address.postal_code,
+        address.country,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : ''
 
   return (
     <section className="sec cko-sec" aria-labelledby="checkout-heading">
@@ -42,6 +58,17 @@ export default async function CheckoutPage() {
           stripeReady={stripeConfigured()}
           checkoutNote={page.checkoutNote}
           shippingNote={page.shippingNote}
+          initialCustomer={
+            account
+              ? {
+                  name: account.profile.full_name,
+                  email: account.user.email,
+                  phone:
+                    `${account.profile.phone_country_code} ${account.profile.phone_number}`.trim(),
+                  shippingLines: deliveryAddress,
+                }
+              : undefined
+          }
         />
       </div>
     </section>

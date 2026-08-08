@@ -97,6 +97,38 @@
   border-top: var(--hair) solid var(--score);
 }
 
+/* Product families make a mixed basket easier to scan; totals intentionally
+   remain global below so checkout always reflects the entire basket. */
+.bsk__sections {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  margin-top: var(--gap);
+  border-block: var(--hair) solid var(--score);
+}
+
+.bsk__section {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--dust);
+  border-right: var(--hair) solid var(--score);
+  transition: color var(--t-quick) var(--ease-gear);
+}
+
+.bsk__section:hover,
+.bsk__section[aria-current='page'] {
+  color: var(--lamp);
+}
+.bsk__section:focus-visible {
+  outline: var(--hair) solid var(--lamp);
+  outline-offset: -3px;
+}
+.bsk__section span {
+  margin-left: 6px;
+  font-family: var(--face-mono);
+}
+
 /* Areas rather than columns, because the row reflows completely between a
    360px phone and a desktop: stacked there, four columns here. */
 .bsk__line {

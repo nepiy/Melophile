@@ -429,6 +429,10 @@ export const changePasswordSchema = z
 export const profileSchema = z.object({
   fullName: z.string().trim().min(2, 'Tell us what to call you.').max(80, 'Shorten it.'),
   username: usernameField,
+  phoneCountryCode: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9][0-9]{0,3}$/, 'Choose a country calling code.'),
   phoneNumber: z
     .string()
     .trim()

@@ -87,7 +87,15 @@ export default async function AccountOverviewPage() {
           </Row>
 
           <Row label="Phone">
-            <Value value={profile.phone_number} cta="Add a phone number" mono />
+            <Value
+              value={
+                profile.phone_number
+                  ? `${profile.phone_country_code} ${profile.phone_number}`
+                  : ''
+              }
+              cta="Add a phone number"
+              mono
+            />
           </Row>
 
           <Row label="Date of birth">
@@ -146,7 +154,9 @@ export default async function AccountOverviewPage() {
       >
         <dl className="ac-rows">
           <Row label="User ID">
-            <span className="mono ac-row__val--ref">{user.id}</span>
+            <span className="mono ac-row__val--ref">
+              {user.public_id ?? 'Preparing…'}
+            </span>
           </Row>
 
           <Row label="Registered">{stamp(user.created_at)}</Row>

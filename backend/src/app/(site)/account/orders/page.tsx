@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { OrderList } from '@/components/account/OrderList'
-import { getAccount, getMyOrders } from '@/lib/account/queries'
+import { getAccount, getMyOrders, getMyStudioBookings } from '@/lib/account/queries'
 import { claimGuestOrders, readOrderStatus } from '@/lib/orders/store'
 import { accountsEnabled, serviceRoleAvailable } from '@/lib/supabase/config'
 
@@ -49,8 +49,9 @@ export default async function AccountOrdersPage({
     await claimGuestOrders(account.user.id, account.user.email)
   }
 
-  const [orders, active] = await Promise.all([
+  const [orders, studioBookings, active] = await Promise.all([
     getMyOrders(account.user.id),
+    getMyStudioBookings(account.user.id),
     // Nothing reaches the filter until it is one of the statuses the schema names.
     searchParams.then((query) => readOrderStatus(query.status)),
   ])
@@ -70,6 +71,38 @@ export default async function AccountOrdersPage({
       </p>
 
       <OrderList orders={orders} active={active} />
+
+      <section className="ac-panel" aria-labelledby="booking-history-heading">
+        <div className="ac-panel__strip" aria-hidden="true">
+          <span className="mono ac-panel__chan">02</span>
+          <span className="ac-panel__rule" />
+          <span className="label ac-panel__strip-label">Studio</span>
+        </div>
+        <h2 className="ac-panel__title" id="booking-history-heading">
+          Studio booking history
+        </h2>
+        {studioBookings.length === 0 ? (
+          <p className="ac-panel__text">No studio requests from this account yet.</p>
+        ) : (
+          <ul className="or-list">
+            {studioBookings.map((booking) => (
+              <li key={booking.id} className="or-row">
+                <div className="or-row__main">
+                  <p className="mono or-row__ref">STUDIO-{booking.id}</p>
+                  <p className="mono or-row__meta">
+                    <span>{booking.date}</span>
+                    <span>{booking.time}</span>
+                  </p>
+                </div>
+                <div className="or-row__side">
+                  <span className="or-row__total">{booking.sessionType}</span>
+                  <span className="label ac-chip">{booking.status}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </section>
   )
 }

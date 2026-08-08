@@ -51,6 +51,8 @@ export type CheckoutFormProps = {
   checkoutNote: string
   /** storePage.shippingNote — shown by the address field. */
   shippingNote: string
+  /** Account details are read server-side and become editable only in this checkout. */
+  initialCustomer?: Partial<Values>
 }
 
 /**
@@ -76,6 +78,7 @@ export function CheckoutForm({
   stripeReady,
   checkoutNote,
   shippingNote,
+  initialCustomer,
 }: CheckoutFormProps) {
   const router = useRouter()
   const [state, formAction, pending] = useActionState(submitCheckout, {})
@@ -84,7 +87,7 @@ export function CheckoutForm({
   const [cart, setCart] = useState<PricedCart | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const [values, setValues] = useState<Values>(BLANK)
+  const [values, setValues] = useState<Values>({ ...BLANK, ...initialCustomer })
   const [errors, setErrors] = useState<Errors>({})
   const [leaving, setLeaving] = useState(false)
 

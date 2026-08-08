@@ -60,6 +60,7 @@ export async function saveProfile(
     fullName: formData.get('fullName'),
     username: formData.get('username'),
     phoneNumber: formData.get('phoneNumber') ?? '',
+    phoneCountryCode: formData.get('phoneCountryCode') ?? '+1',
     dateOfBirth: formData.get('dateOfBirth') ?? '',
     gender: formData.get('gender') ?? '',
     genderSelfDescribed: formData.get('genderSelfDescribed') ?? '',
@@ -94,6 +95,7 @@ export async function saveProfile(
     .update({
       full_name: v.fullName,
       phone_number: v.phoneNumber,
+      phone_country_code: v.phoneCountryCode,
       date_of_birth: v.dateOfBirth === '' ? null : v.dateOfBirth,
       gender: v.gender === '' ? null : v.gender,
       gender_self_described: v.gender === 'self_described' ? v.genderSelfDescribed : '',

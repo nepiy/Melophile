@@ -1,5 +1,16 @@
 import { relations } from 'drizzle-orm'
-import { boolean, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core'
 
 /* ------------------------------------------------------------------ *
  * Shared shapes
@@ -91,10 +102,7 @@ export const siteSettings = pgTable('site_settings', {
   navStore: text('nav_store').notNull().default('Store'),
   navEvents: text('nav_events').notNull().default('Events'),
   footerText: text('footer_text').notNull().default(''),
-  socialLinks: jsonb('social_links')
-    .$type<SocialItem[]>()
-    .notNull()
-    .default([]),
+  socialLinks: jsonb('social_links').$type<SocialItem[]>().notNull().default([]),
   metaTitle: text('meta_title').notNull().default('Melophile Records'),
   metaDescription: text('meta_description').notNull().default(''),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
@@ -128,9 +136,7 @@ export const about = pgTable('about', {
   /** Markdown. Rendered to React elements, never to an HTML string. */
   body: text('body').notNull().default(''),
   foundedYear: integer('founded_year'),
-  showCatalogCount: boolean('show_catalog_count')
-    .notNull()
-    .default(true),
+  showCatalogCount: boolean('show_catalog_count').notNull().default(true),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
@@ -141,10 +147,7 @@ export const contact = pgTable('contact', {
   emails: jsonb('emails').$type<EmailItem[]>().notNull().default([]),
   phone: text('phone').notNull().default(''),
   hours: text('hours').notNull().default(''),
-  socialLinks: jsonb('social_links')
-    .$type<SocialItem[]>()
-    .notNull()
-    .default([]),
+  socialLinks: jsonb('social_links').$type<SocialItem[]>().notNull().default([]),
   /** Raw iframe src URL only — never arbitrary HTML. Validated on save. */
   mapEmbed: text('map_embed').notNull().default(''),
   bookingHeading: text('booking_heading').notNull().default('Book the studio'),
@@ -273,6 +276,8 @@ export const bookings = pgTable(
   'bookings',
   {
     id: serial('id').primaryKey(),
+    /** Supabase auth UUID when booked while signed in; blank for guests. */
+    userId: text('user_id').notNull().default(''),
     name: text('name').notNull(),
     email: text('email').notNull(),
     phone: text('phone').notNull().default(''),
@@ -298,6 +303,7 @@ export const bookings = pgTable(
     createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   },
   (t) => [
+    index('bookings_user_id_idx').on(t.userId, t.createdAt),
     index('bookings_created_idx').on(t.createdAt),
     index('bookings_status_idx').on(t.status),
   ],
@@ -327,9 +333,7 @@ export const adminUsers = pgTable(
     passwordHash: text('password_hash').notNull(),
     passwordSalt: text('password_salt').notNull(),
     /** Set when seeded with the default password; the admin nags until changed. */
-    mustChangePassword: boolean('must_change_password')
-      .notNull()
-      .default(false),
+    mustChangePassword: boolean('must_change_password').notNull().default(false),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
     lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
   },

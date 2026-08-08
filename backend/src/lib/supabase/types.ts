@@ -41,6 +41,7 @@ export type ActivityType =
 
 export type UserRow = {
   id: string
+  public_id: string | null
   email: string
   username: string | null
   status: AccountStatus
@@ -58,6 +59,7 @@ export type ProfileRow = {
   user_id: string
   full_name: string
   phone_number: string
+  phone_country_code: string
   /** A storage object path such as `<uid>/avatar.webp`, not a URL. */
   profile_picture: string
   date_of_birth: string | null

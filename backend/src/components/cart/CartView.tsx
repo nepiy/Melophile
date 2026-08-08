@@ -71,6 +71,7 @@ export function CartView({ shippingNote, cancelled = false }: CartViewProps) {
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const [blocked, setBlocked] = useState(false)
+  const [section, setSection] = useState('all')
 
   /* ---- read the basket, and keep reading it ---- */
 
@@ -196,6 +197,17 @@ export function CartView({ shippingNote, cancelled = false }: CartViewProps) {
   const priced = new Map((cart?.lines ?? []).map((line) => [keyOf(line), line]))
   const issues = cart?.issues ?? []
   const stuck = issues.length > 0 || failed
+  const groupFor = (line: CartLine) => priced.get(keyOf(line))?.kind ?? 'other'
+  const groups = Array.from(new Set(lines.map(groupFor)))
+  const groupLabel: Record<string, string> = {
+    beat: 'Beats',
+    music: 'Music',
+    merch: 'Merch',
+    ticket: 'Tickets',
+    other: 'Other',
+  }
+  const visibleLines =
+    section === 'all' ? lines : lines.filter((line) => groupFor(line) === section)
 
   return (
     <div className="bsk">
@@ -239,8 +251,31 @@ export function CartView({ shippingNote, cancelled = false }: CartViewProps) {
         </div>
       ) : null}
 
+      <nav className="bsk__sections" aria-label="Basket sections">
+        <button
+          type="button"
+          className="label bsk__section"
+          aria-current={section === 'all' ? 'page' : undefined}
+          onClick={() => setSection('all')}
+        >
+          All <span>{lines.length}</span>
+        </button>
+        {groups.map((group) => (
+          <button
+            key={group}
+            type="button"
+            className="label bsk__section"
+            aria-current={section === group ? 'page' : undefined}
+            onClick={() => setSection(group)}
+          >
+            {groupLabel[group] ?? group}{' '}
+            <span>{lines.filter((line) => groupFor(line) === group).length}</span>
+          </button>
+        ))}
+      </nav>
+
       <ul className="bsk__lines">
-        {lines.map((line) => {
+        {visibleLines.map((line) => {
           const key = keyOf(line)
           const row = priced.get(key)
 

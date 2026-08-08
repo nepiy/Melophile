@@ -120,6 +120,13 @@ export function OrderList({
                     <span>
                       {things} {pluralise(things, 'item')}
                     </span>
+                    <span>
+                      {[
+                        ...new Set(
+                          order.items.map((item) => item.product_kind || 'store'),
+                        ),
+                      ].join(' · ')}
+                    </span>
                   </p>
                 </div>
 

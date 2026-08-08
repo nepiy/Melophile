@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bookings, db } from '@/db'
+import { eq } from 'drizzle-orm'
 import { createServerSupabase, getCurrentUser } from '@/lib/supabase/server'
 import { accountsEnabled, SUPABASE_URL } from '@/lib/supabase/config'
 import type {
@@ -60,6 +62,7 @@ export async function getAccount(): Promise<Account | null> {
     user_id: authUser.id,
     full_name: '',
     phone_number: '',
+    phone_country_code: '+1',
     profile_picture: '',
     date_of_birth: null,
     gender: null,
@@ -126,6 +129,16 @@ export async function getMyActivity(userId: string, limit = 30): Promise<Activit
     .order('created_at', { ascending: false })
     .limit(limit)
   return data ?? []
+}
+
+/** Studio requests live in the operational database but carry the auth UUID,
+ * so they remain part of the customer's durable account history. */
+export async function getMyStudioBookings(userId: string) {
+  return db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.userId, userId))
+    .orderBy(bookings.createdAt)
 }
 
 /* ------------------------------------------------------------------ *

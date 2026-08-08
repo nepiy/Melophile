@@ -5,6 +5,7 @@ import { blackouts, bookings, db } from '@/db'
 import { todayIso } from '@/lib/format'
 import { notifyBooking, type NotifyResult } from '@/lib/mail'
 import { checkBookingRate, clientIp } from '@/lib/ratelimit'
+import { getCurrentUser } from '@/lib/supabase/server'
 import { bookingSchema, toFieldErrors, type FieldErrors } from '@/lib/validation'
 
 /* ==========================================================================
@@ -115,11 +116,13 @@ export async function submitBooking(formData: FormData): Promise<BookingResult> 
   }
 
   // 5 — commit. Everything after this point can fail without losing anything.
+  const signedInUser = await getCurrentUser()
   let row
   try {
     row = await db
       .insert(bookings)
       .values({
+        userId: signedInUser?.id ?? '',
         name: data.name,
         email: data.email,
         phone: data.phone,

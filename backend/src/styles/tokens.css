@@ -140,7 +140,7 @@
      --------------------------------------------------------------------- */
   --t-flick: 90ms; /* a relay closing: lock transient, button press */
   --t-quick: 180ms; /* hover, focus, filter change */
-  --t-ease: 420ms; /* scroll reveal, dialog open */
+  --t-ease: 240ms; /* scroll reveal, dialog open — quick between pages */
   --t-settle: 900ms; /* the span a staggered group takes end to end */
 
   --ease-gear: cubic-bezier(0.16, 1, 0.3, 1); /* decelerating, mechanical */
