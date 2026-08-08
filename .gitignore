@@ -18,4 +18,8 @@ public/uploads/*
 .env*.local
 .DS_Store
 
+# Local instructions for Codex/agents. Keep this on each developer's machine,
+# never in the application repository.
+/agents.md
+
 .vscode/

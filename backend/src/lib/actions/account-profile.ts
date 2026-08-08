@@ -34,6 +34,16 @@ export type ProfileState = {
 }
 
 const NOT_CONFIGURED = 'Customer accounts are not switched on yet.'
+const ACCOUNT_SCHEMA_MISSING =
+  'Account storage has not been installed yet. The site owner needs to run supabase/migrations/0001_accounts_and_orders.sql and supabase/migrations/0002_profile_identity.sql in the Supabase SQL Editor, then try again.'
+
+function accountStorageMessage(message: string): string {
+  return /Could not find the table ['"]public\.(users|profiles|addresses)['"]|PGRST205/i.test(
+    message,
+  )
+    ? ACCOUNT_SCHEMA_MISSING
+    : message
+}
 
 async function requestContext() {
   const h = await headers()
@@ -90,7 +100,7 @@ export async function saveProfile(
   if (userError) {
     return /duplicate|unique/i.test(userError.message)
       ? { fieldErrors: { username: 'That username is taken. Try another.' } }
-      : { formError: userError.message }
+      : { formError: accountStorageMessage(userError.message) }
   }
 
   const profileUpdate = {
@@ -119,7 +129,7 @@ export async function saveProfile(
     error = retry.error
   }
 
-  if (error) return { formError: error.message }
+  if (error) return { formError: accountStorageMessage(error.message) }
 
   await logActivity(user.id, 'profile_updated', {}, await requestContext())
   revalidatePath('/account')
