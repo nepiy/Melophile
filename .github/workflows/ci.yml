@@ -21,19 +21,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npm run typecheck
 
       - name: Content checks
-        run: npm run check
+        run: npm run check --workspace backend
 
       - name: Prepare database schema
-        run: npm run db:migrate
+        run: npm run db:migrate --workspace backend
 
       - name: Build
         run: npm run build
