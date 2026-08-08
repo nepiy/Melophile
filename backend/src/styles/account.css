@@ -784,6 +784,41 @@ select.ac-select {
   border: var(--hair) solid var(--score);
 }
 
+/* The account control opens a proper settings dialog rather than a small menu:
+   profile fields, saved addresses and history are real account work. */
+.ac-quick {
+  display: grid;
+  gap: var(--gap);
+  padding: 0 var(--gap) var(--gap);
+}
+
+.ac-quick__label,
+.ac-quick__section h3 {
+  color: var(--lamp);
+}
+
+.ac-quick__title {
+  color: var(--tape);
+  font-size: var(--fs-h2);
+}
+
+.ac-quick__section {
+  display: grid;
+  gap: var(--gap-sm);
+  padding-top: var(--gap);
+  border-top: var(--hair) solid var(--score);
+}
+
+.ac-quick__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.ac-quick__signout {
+  border-top: var(--hair) solid var(--score);
+}
+
 .ac-menu__head {
   padding: 12px 14px;
   border-bottom: var(--hair) solid var(--score);

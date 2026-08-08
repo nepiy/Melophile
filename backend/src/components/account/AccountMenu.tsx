@@ -2,14 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react'
+import { useEffect, useState } from 'react'
+import { Dialog, useDialogTitleId } from '@/components/site/Dialog'
+import { GoogleConnect } from '@/components/account/GoogleConnect'
+import { ProfileForm, type ProfileFormValues } from '@/components/account/ProfileForm'
 import { signOut } from '@/lib/actions/account-auth'
 import { createClient } from '@/lib/supabase/client'
 import { SUPABASE_URL, accountsEnabled } from '@/lib/supabase/config'
@@ -45,9 +41,17 @@ export type AccountMenuProps = {
   displayName: string
   username: string | null
   avatarUrl: string | null
+  details?: AccountDetails | null
 }
 
 type Resolved = Omit<AccountMenuProps, 'signedIn'>
+
+type AccountDetails = {
+  email: string
+  publicId: string | null
+  authMethod: 'email' | 'google'
+  profile: ProfileFormValues
+}
 
 /**
  * Public URL for an avatar object path.
@@ -123,15 +127,9 @@ export function Avatar({
    The nav menu
    -------------------------------------------------------------------------- */
 
-/** The items, in the order the arrow keys walk them. Sign out is last. */
-const LINKS = [
-  { href: '/account', label: 'Profile' },
-  { href: '/account/orders', label: 'Orders' },
-  { href: '/account/settings', label: 'Settings' },
-] as const
-
 export function AccountMenu() {
   const [account, setAccount] = useState<Resolved | null>(null)
+  const [details, setDetails] = useState<AccountDetails | null>(null)
 
   /* Supabase is not configured on a fresh checkout, and the whole site works
      without it. Nothing to sign in to means nothing to render. */
@@ -145,17 +143,26 @@ export function AccountMenu() {
 
     async function load(userId: string | null) {
       if (!userId) {
-        if (live) setAccount(null)
+        if (live) {
+          setAccount(null)
+          setDetails(null)
+        }
         return
       }
 
       // Both reads are the customer's own rows under row level security; the
       // anon key cannot reach anybody else's, whatever id were passed here.
       const [{ data: user }, { data: profile }] = await Promise.all([
-        supabase.from('users').select('username, email').eq('id', userId).maybeSingle(),
+        supabase
+          .from('users')
+          .select('username, email, public_id, auth_method')
+          .eq('id', userId)
+          .maybeSingle(),
         supabase
           .from('profiles')
-          .select('full_name, profile_picture')
+          .select(
+            'full_name, profile_picture, phone_country_code, phone_number, date_of_birth, gender, gender_self_described, bio, marketing_opt_in',
+          )
           .eq('user_id', userId)
           .maybeSingle(),
       ])
@@ -163,11 +170,39 @@ export function AccountMenu() {
       if (!live) return
 
       const username = user?.username ?? null
+      const safeProfile = profile ?? {
+        full_name: '',
+        profile_picture: '',
+        phone_country_code: '+1',
+        phone_number: '',
+        date_of_birth: null,
+        gender: null,
+        gender_self_described: '',
+        bio: '',
+        marketing_opt_in: false,
+      }
       setAccount({
         displayName:
-          profile?.full_name || (username ? `@${username}` : (user?.email ?? 'Account')),
+          safeProfile.full_name ||
+          (username ? `@${username}` : (user?.email ?? 'Account')),
         username,
-        avatarUrl: publicAvatarUrl(profile?.profile_picture),
+        avatarUrl: publicAvatarUrl(safeProfile.profile_picture),
+      })
+      setDetails({
+        email: user?.email ?? '',
+        publicId: user?.public_id ?? null,
+        authMethod: user?.auth_method === 'google' ? 'google' : 'email',
+        profile: {
+          fullName: safeProfile.full_name,
+          username: username ?? '',
+          phoneCountryCode: safeProfile.phone_country_code,
+          phoneNumber: safeProfile.phone_number,
+          dateOfBirth: safeProfile.date_of_birth?.slice(0, 10) ?? '',
+          gender: safeProfile.gender ?? '',
+          genderSelfDescribed: safeProfile.gender_self_described,
+          bio: safeProfile.bio,
+          marketingOptIn: safeProfile.marketing_opt_in,
+        },
       })
     }
 
@@ -194,6 +229,7 @@ export function AccountMenu() {
       displayName={account?.displayName ?? ''}
       username={account?.username ?? null}
       avatarUrl={account?.avatarUrl ?? null}
+      details={details}
     />
   )
 }
@@ -207,72 +243,10 @@ export function AccountMenuView({
   displayName,
   username,
   avatarUrl,
+  details,
 }: AccountMenuProps) {
-  const menuId = useId()
-  const pathname = usePathname()
   const [open, setOpen] = useState(false)
-
-  const wrapRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const itemRefs = useRef<(HTMLElement | null)[]>([])
-
-  const close = useCallback((returnFocus: boolean) => {
-    setOpen(false)
-    if (returnFocus) triggerRef.current?.focus()
-  }, [])
-
-  // A menu left hanging over the page you have just navigated to is a bug, and
-  // on mobile it covers the thing you tapped through to.
-  useEffect(() => setOpen(false), [pathname])
-
-  useEffect(() => {
-    if (!open) return
-
-    // pointerdown, not click: a mousedown outside should dismiss before the
-    // thing under the cursor reacts, which is what every native menu does.
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target
-      if (target instanceof Node && wrapRef.current?.contains(target)) return
-      close(false)
-    }
-
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [open, close])
-
-  // Opening a menu puts you in it. Without this, the first arrow press after
-  // opening does nothing, because focus is still on the button.
-  useEffect(() => {
-    if (open) itemRefs.current[0]?.focus()
-  }, [open])
-
-  function moveFocus(from: number, delta: number) {
-    const items = itemRefs.current.filter((item): item is HTMLElement => item !== null)
-    if (items.length === 0) return
-    const next = (from + delta + items.length) % items.length
-    items[next]?.focus()
-  }
-
-  function onItemKeyDown(index: number) {
-    return (event: ReactKeyboardEvent) => {
-      if (event.key === 'ArrowDown') {
-        event.preventDefault()
-        moveFocus(index, 1)
-      } else if (event.key === 'ArrowUp') {
-        event.preventDefault()
-        moveFocus(index, -1)
-      } else if (event.key === 'Home') {
-        event.preventDefault()
-        moveFocus(-1, 1)
-      } else if (event.key === 'End') {
-        event.preventDefault()
-        moveFocus(0, -1)
-      } else if (event.key === 'Tab') {
-        // Tabbing out of a menu closes it, but does not steal the focus back.
-        close(false)
-      }
-    }
-  }
+  const titleId = useDialogTitleId('account-settings')
 
   /* Signed out, and the state the server renders. One link, no machinery. */
   if (!signedIn) {
@@ -288,86 +262,79 @@ export function AccountMenuView({
   const handle = username ? `@${username}` : null
 
   return (
-    <div
-      className="ac-menu"
-      ref={wrapRef}
-      /* Escape is handled here rather than on the document because the nav has
-         its own document-level Escape listener for the mobile sheet. Stopping
-         the React event stops the native one before it leaves the app root, so
-         closing this menu does not also close the sheet it is sitting in. */
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape' || !open) return
-        event.stopPropagation()
-        close(true)
-      }}
-    >
+    <div className="ac-menu">
       <button
         type="button"
         className="ac-menu__trigger"
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        ref={triggerRef}
-        onClick={() => setOpen((value) => !value)}
-        onKeyDown={(event) => {
-          if (event.key === 'ArrowDown' && !open) {
-            event.preventDefault()
-            setOpen(true)
-          }
-        }}
+        onClick={() => setOpen(true)}
       >
         <Avatar url={avatarUrl} name={displayName} size="sm" />
         <span className="label ac-menu__name">{handle ?? displayName}</span>
         <span className="vh">— your account</span>
       </button>
 
-      {open ? (
-        <div className="ac-menu__pop">
-          {/* Outside the menu, because a menu's children are menu items and
-              this is a caption. */}
-          <div className="ac-menu__head">
-            <p className="ac-menu__head-name">{displayName}</p>
-            {handle ? <p className="mono ac-menu__head-handle">{handle}</p> : null}
-          </div>
-
-          <div id={menuId} role="menu" aria-label="Your account">
-            {LINKS.map((link, index) => (
-              <Link
-                key={link.href}
-                className="label ac-menu__item"
-                href={link.href}
-                role="menuitem"
-                tabIndex={-1}
-                ref={(element) => {
-                  itemRefs.current[index] = element
-                }}
-                onKeyDown={onItemKeyDown(index)}
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {/* A real form posting to the action, so signing out works with the
-                keyboard, with a screen reader, and with JavaScript switched
-                off. role="none" because the form is plumbing, not an item. */}
-            <form className="ac-menu__out" action={signOut} role="none">
-              <button
-                type="submit"
-                className="label ac-menu__item"
-                role="menuitem"
-                tabIndex={-1}
-                ref={(element) => {
-                  itemRefs.current[LINKS.length] = element
-                }}
-                onKeyDown={onItemKeyDown(LINKS.length)}
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        titleId={titleId}
+        closeLabel="Close settings"
+      >
+        <div className="ac-quick">
+          <p className="label ac-quick__label">Account settings</p>
+          <h2 className="ac-quick__title" id={titleId}>
+            {displayName}
+          </h2>
+          <dl className="ac-rows">
+            <div className="ac-row">
+              <dt className="label ac-row__key">User ID</dt>
+              <dd className="mono ac-row__val">{details?.publicId ?? 'Preparing…'}</dd>
+            </div>
+            <div className="ac-row">
+              <dt className="label ac-row__key">Email</dt>
+              <dd className="mono ac-row__val">{details?.email || 'Loading…'}</dd>
+            </div>
+          </dl>
+          {details ? (
+            <ProfileForm initial={details.profile} />
+          ) : (
+            <p className="ac-panel__text">Loading your profile…</p>
+          )}
+          <section className="ac-quick__section">
+            <h3 className="label">Connected accounts</h3>
+            <GoogleConnect connected={details?.authMethod === 'google'} />
+          </section>
+          <nav className="ac-quick__links" aria-label="Account history">
+            <Link
+              className="btn btn--ghost btn--sm"
+              href="/account/orders"
+              onClick={() => setOpen(false)}
+            >
+              Detailed orders & bookings
+            </Link>
+            <Link
+              className="btn btn--ghost btn--sm"
+              href="/account/activity"
+              onClick={() => setOpen(false)}
+            >
+              Account activity
+            </Link>
+            <Link
+              className="btn btn--ghost btn--sm"
+              href="/account/addresses"
+              onClick={() => setOpen(false)}
+            >
+              Addresses
+            </Link>
+          </nav>
+          <form className="ac-quick__signout" action={signOut}>
+            <button type="submit" className="label ac-menu__item">
+              Sign out
+            </button>
+          </form>
         </div>
-      ) : null}
+      </Dialog>
     </div>
   )
 }
