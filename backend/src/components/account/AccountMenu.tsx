@@ -4,11 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Dialog, useDialogTitleId } from '@/components/site/Dialog'
+import { AddressBook } from '@/components/account/AddressBook'
 import { GoogleConnect } from '@/components/account/GoogleConnect'
 import { ProfileForm, type ProfileFormValues } from '@/components/account/ProfileForm'
 import { signOut } from '@/lib/actions/account-auth'
 import { createClient } from '@/lib/supabase/client'
 import { SUPABASE_URL, accountsEnabled } from '@/lib/supabase/config'
+import type { AddressRow } from '@/lib/supabase/types'
 
 /* ==========================================================================
    The account's own navigation. Two pieces, one client boundary:
@@ -51,6 +53,7 @@ type AccountDetails = {
   publicId: string | null
   authMethod: 'email' | 'google'
   profile: ProfileFormValues
+  addresses: AddressRow[]
 }
 
 /**
@@ -141,7 +144,7 @@ export function AccountMenu() {
     let live = true
     const supabase = createClient()
 
-    async function load(userId: string | null) {
+    async function load(userId: string | null, authEmail = '') {
       if (!userId) {
         if (live) {
           setAccount(null)
@@ -150,30 +153,43 @@ export function AccountMenu() {
         return
       }
 
-      // Both reads are the customer's own rows under row level security; the
-      // anon key cannot reach anybody else's, whatever id were passed here.
-      const [{ data: user }, { data: profile }] = await Promise.all([
-        supabase
-          .from('users')
-          .select('username, email, public_id, auth_method')
-          .eq('id', userId)
-          .maybeSingle(),
-        supabase
-          .from('profiles')
-          .select(
-            'full_name, profile_picture, phone_country_code, phone_number, date_of_birth, gender, gender_self_described, bio, marketing_opt_in',
-          )
-          .eq('user_id', userId)
-          .maybeSingle(),
-      ])
+      // Keep the established fields separate from newer profile fields. An
+      // unfinished migration must not blank a signed-in user's whole modal.
+      const [basicUser, basicProfile, addressRows, idResult, countryResult] =
+        await Promise.all([
+          supabase
+            .from('users')
+            .select('username, email, auth_method')
+            .eq('id', userId)
+            .maybeSingle(),
+          supabase
+            .from('profiles')
+            .select(
+              'full_name, profile_picture, phone_number, date_of_birth, gender, gender_self_described, bio, marketing_opt_in',
+            )
+            .eq('user_id', userId)
+            .maybeSingle(),
+          supabase
+            .from('addresses')
+            .select('*')
+            .eq('user_id', userId)
+            .order('is_default', { ascending: false }),
+          supabase.from('users').select('public_id').eq('id', userId).maybeSingle(),
+          supabase
+            .from('profiles')
+            .select('phone_country_code')
+            .eq('user_id', userId)
+            .maybeSingle(),
+        ])
 
       if (!live) return
 
+      const user = basicUser.data
+      const profile = basicProfile.data
       const username = user?.username ?? null
       const safeProfile = profile ?? {
         full_name: '',
         profile_picture: '',
-        phone_country_code: '+1',
         phone_number: '',
         date_of_birth: null,
         gender: null,
@@ -181,21 +197,21 @@ export function AccountMenu() {
         bio: '',
         marketing_opt_in: false,
       }
+      const email = user?.email ?? authEmail
       setAccount({
         displayName:
-          safeProfile.full_name ||
-          (username ? `@${username}` : (user?.email ?? 'Account')),
+          safeProfile.full_name || (username ? `@${username}` : email || 'Account'),
         username,
         avatarUrl: publicAvatarUrl(safeProfile.profile_picture),
       })
       setDetails({
-        email: user?.email ?? '',
-        publicId: user?.public_id ?? null,
+        email,
+        publicId: idResult.data?.public_id ?? null,
         authMethod: user?.auth_method === 'google' ? 'google' : 'email',
         profile: {
           fullName: safeProfile.full_name,
           username: username ?? '',
-          phoneCountryCode: safeProfile.phone_country_code,
+          phoneCountryCode: countryResult.data?.phone_country_code ?? '+1',
           phoneNumber: safeProfile.phone_number,
           dateOfBirth: safeProfile.date_of_birth?.slice(0, 10) ?? '',
           gender: safeProfile.gender ?? '',
@@ -203,16 +219,17 @@ export function AccountMenu() {
           bio: safeProfile.bio,
           marketingOptIn: safeProfile.marketing_opt_in,
         },
+        addresses: (addressRows.data ?? []) as AddressRow[],
       })
     }
 
     supabase.auth.getSession().then(({ data }) => {
-      void load(data.session?.user.id ?? null)
+      void load(data.session?.user.id ?? null, data.session?.user.email ?? '')
     })
 
     // Signing out in another tab, or a token expiring, changes the bar here.
     const watch = supabase.auth.onAuthStateChange((_event, session) => {
-      void load(session?.user.id ?? null)
+      void load(session?.user.id ?? null, session?.user.email ?? '')
     })
 
     return () => {
@@ -289,7 +306,9 @@ export function AccountMenuView({
           <dl className="ac-rows">
             <div className="ac-row">
               <dt className="label ac-row__key">User ID</dt>
-              <dd className="mono ac-row__val">{details?.publicId ?? 'Preparing…'}</dd>
+              <dd className="mono ac-row__val">
+                {details ? (details.publicId ?? 'Not issued yet') : 'Loading…'}
+              </dd>
             </div>
             <div className="ac-row">
               <dt className="label ac-row__key">Email</dt>
@@ -304,6 +323,10 @@ export function AccountMenuView({
           <section className="ac-quick__section">
             <h3 className="label">Connected accounts</h3>
             <GoogleConnect connected={details?.authMethod === 'google'} />
+          </section>
+          <section className="ac-quick__section">
+            <h3 className="label">Delivery address</h3>
+            {details ? <AddressBook addresses={details.addresses} /> : null}
           </section>
           <nav className="ac-quick__links" aria-label="Account history">
             <Link

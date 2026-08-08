@@ -11,6 +11,9 @@ import { CartBadge } from '@/components/cart/CartBadge'
    that knows about it. The dashboard imports it again from its own layout;
    Next serves one copy either way. */
 import '@/styles/account.css'
+// The Account button can open the profile form from any public route, not just
+// /account, so its input styles must be available in this shared nav too.
+import '@/styles/auth.css'
 
 export type NavProps = {
   logoText: string

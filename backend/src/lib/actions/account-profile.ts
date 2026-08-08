@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { logActivity, usernameAvailable } from '@/lib/account/queries'
 import { clientIp } from '@/lib/ratelimit'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { accountsEnabled } from '@/lib/supabase/config'
+import { accountsEnabled, serviceRoleAvailable } from '@/lib/supabase/config'
 import { createServerSupabase } from '@/lib/supabase/server'
 import {
   addressSchema,
@@ -76,7 +76,10 @@ export async function saveProfile(
 
   // Checked before writing so the customer gets a field error rather than a
   // constraint violation. The unique index is still the real guard.
-  if (!(await usernameAvailable(v.username, user.id))) {
+  // A service-role key is useful for the friendly pre-flight message, but it
+  // must never be a requirement for saving a profile. Without it Postgres's
+  // unique index remains the authority and the update below reports a clash.
+  if (serviceRoleAvailable() && !(await usernameAvailable(v.username, user.id))) {
     return { fieldErrors: { username: 'That username is taken. Try another.' } }
   }
 
@@ -90,19 +93,31 @@ export async function saveProfile(
       : { formError: userError.message }
   }
 
-  const { error } = await supabase
+  const profileUpdate = {
+    full_name: v.fullName,
+    phone_number: v.phoneNumber,
+    phone_country_code: v.phoneCountryCode,
+    date_of_birth: v.dateOfBirth === '' ? null : v.dateOfBirth,
+    gender: v.gender === '' ? null : v.gender,
+    gender_self_described: v.gender === 'self_described' ? v.genderSelfDescribed : '',
+    bio: v.bio,
+    marketing_opt_in: v.marketingOptIn,
+  }
+
+  let { error } = await supabase
     .from('profiles')
-    .update({
-      full_name: v.fullName,
-      phone_number: v.phoneNumber,
-      phone_country_code: v.phoneCountryCode,
-      date_of_birth: v.dateOfBirth === '' ? null : v.dateOfBirth,
-      gender: v.gender === '' ? null : v.gender,
-      gender_self_described: v.gender === 'self_described' ? v.genderSelfDescribed : '',
-      bio: v.bio,
-      marketing_opt_in: v.marketingOptIn,
-    })
-    .eq('user_id', user.id)
+    .upsert({ user_id: user.id, ...profileUpdate }, { onConflict: 'user_id' })
+
+  // Sites upgraded before the profile-identity migration can still save the
+  // existing profile fields. Country code becomes persistent as soon as the
+  // migration has run, instead of making every profile save fail meanwhile.
+  if (error && /phone_country_code/i.test(error.message)) {
+    const { phone_country_code: _countryCode, ...legacyUpdate } = profileUpdate
+    const retry = await supabase
+      .from('profiles')
+      .upsert({ user_id: user.id, ...legacyUpdate }, { onConflict: 'user_id' })
+    error = retry.error
+  }
 
   if (error) return { formError: error.message }
 

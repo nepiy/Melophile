@@ -31,6 +31,68 @@ const GENDERS = [
   { value: 'self_described', label: 'Self-described' },
 ] as const
 
+// The field stays editable, rather than limiting customers to a short list:
+// any valid E.164 country calling code can be entered. These are useful
+// search suggestions, not a restriction on which country can be used.
+const CALLING_CODE_SUGGESTIONS = [
+  ['+1', 'United States / Canada'],
+  ['+7', 'Russia / Kazakhstan'],
+  ['+20', 'Egypt'],
+  ['+27', 'South Africa'],
+  ['+30', 'Greece'],
+  ['+31', 'Netherlands'],
+  ['+32', 'Belgium'],
+  ['+33', 'France'],
+  ['+34', 'Spain'],
+  ['+36', 'Hungary'],
+  ['+39', 'Italy'],
+  ['+40', 'Romania'],
+  ['+41', 'Switzerland'],
+  ['+43', 'Austria'],
+  ['+44', 'United Kingdom'],
+  ['+45', 'Denmark'],
+  ['+46', 'Sweden'],
+  ['+47', 'Norway'],
+  ['+48', 'Poland'],
+  ['+49', 'Germany'],
+  ['+51', 'Peru'],
+  ['+52', 'Mexico'],
+  ['+54', 'Argentina'],
+  ['+55', 'Brazil'],
+  ['+56', 'Chile'],
+  ['+57', 'Colombia'],
+  ['+60', 'Malaysia'],
+  ['+61', 'Australia'],
+  ['+62', 'Indonesia'],
+  ['+63', 'Philippines'],
+  ['+64', 'New Zealand'],
+  ['+65', 'Singapore'],
+  ['+66', 'Thailand'],
+  ['+81', 'Japan'],
+  ['+82', 'South Korea'],
+  ['+84', 'Vietnam'],
+  ['+86', 'China'],
+  ['+90', 'Türkiye'],
+  ['+91', 'India'],
+  ['+92', 'Pakistan'],
+  ['+93', 'Afghanistan'],
+  ['+94', 'Sri Lanka'],
+  ['+95', 'Myanmar'],
+  ['+98', 'Iran'],
+  ['+211', 'South Sudan'],
+  ['+212', 'Morocco'],
+  ['+234', 'Nigeria'],
+  ['+254', 'Kenya'],
+  ['+255', 'Tanzania'],
+  ['+256', 'Uganda'],
+  ['+971', 'United Arab Emirates'],
+  ['+972', 'Israel'],
+  ['+974', 'Qatar'],
+  ['+975', 'Bhutan'],
+  ['+976', 'Mongolia'],
+  ['+977', 'Nepal'],
+] as const
+
 export type ProfileFormValues = {
   fullName: string
   username: string
@@ -207,27 +269,29 @@ export function ProfileForm({ initial }: { initial: ProfileFormValues }) {
           <label className="label au-field__label" htmlFor={`${uid}-phoneCountryCode`}>
             Country code
           </label>
-          <span className="ac-select-wrap">
-            <select
-              id={`${uid}-phoneCountryCode`}
-              name="phoneCountryCode"
-              className="au-box ac-select au-box--mono"
-              value={values.phoneCountryCode}
-              ref={hold('phoneCountryCode')}
-              aria-invalid={Boolean(errors.phoneCountryCode)}
-              aria-describedby={describe('phoneCountryCode', false)}
-              onChange={(event) =>
-                setValue('phoneCountryCode', event.currentTarget.value)
-              }
-              onBlur={() => checkOne('phoneCountryCode', values)}
-            >
-              <option value="+1">United States / Canada (+1)</option>
-              <option value="+44">United Kingdom (+44)</option>
-              <option value="+61">Australia (+61)</option>
-              <option value="+91">India (+91)</option>
-              <option value="+977">Nepal (+977)</option>
-            </select>
-          </span>
+          <input
+            id={`${uid}-phoneCountryCode`}
+            name="phoneCountryCode"
+            type="tel"
+            list={`${uid}-phone-country-codes`}
+            className="au-box au-box--mono"
+            inputMode="tel"
+            placeholder="+977"
+            value={values.phoneCountryCode}
+            ref={hold('phoneCountryCode')}
+            aria-invalid={Boolean(errors.phoneCountryCode)}
+            aria-describedby={describe('phoneCountryCode', false)}
+            onChange={(event) => setValue('phoneCountryCode', event.currentTarget.value)}
+            onBlur={() => checkOne('phoneCountryCode', values)}
+          />
+          <datalist id={`${uid}-phone-country-codes`}>
+            {CALLING_CODE_SUGGESTIONS.map(([code, country]) => (
+              <option key={code} value={code} label={country} />
+            ))}
+          </datalist>
+          <p className="mono au-hint">
+            Choose a suggestion or type the calling code for any country.
+          </p>
           {err('phoneCountryCode')}
         </div>
         <div className="au-field">
