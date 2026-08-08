@@ -28,11 +28,7 @@ function compat<T extends object>(target: T): T {
         // .from(), .where(), and .limit(). Wrap every non-Promise object so
         // the SQLite compatibility helpers remain available at the end of
         // any PostgreSQL query chain.
-        if (
-          result &&
-          typeof result === 'object' &&
-          typeof (result as any).then !== 'function'
-        ) {
+        if (result && typeof result === 'object' && !(result instanceof Promise)) {
           return compat(result)
         }
         return result

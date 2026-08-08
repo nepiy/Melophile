@@ -13,7 +13,9 @@ async function createInitialAdmin(): Promise<void> {
   // Railway runs migrations on an empty volume but does not run the optional
   // demo-content seed. Create the one account needed to enter /admin from its
   // deployment variables, without ever replacing an existing account.
-  const existing = await db.select({ id: adminUsers.id }).from(adminUsers).limit(1).all()
+  // PostgreSQL query builders are awaitable; unlike the previous SQLite
+  // driver they do not expose the `.all()` convenience method.
+  const existing = await db.select({ id: adminUsers.id }).from(adminUsers).limit(1)
   if (existing.length > 0) return
 
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? ''
