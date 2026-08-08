@@ -7,24 +7,23 @@
  * The PostgreSQL database must already have `npm run db:migrate` applied and
  * be empty. The script refuses to overwrite it.
  */
-import Database from 'better-sqlite3'
 import postgres from 'postgres'
 import { isAbsolute, resolve } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 
 const source = process.env.SQLITE_DATABASE_URL?.replace(/^file:/, '')
 const target = process.env.DATABASE_URL
 if (!source || !target) throw new Error('Set SQLITE_DATABASE_URL and DATABASE_URL before importing.')
 
-const sqlite = new Database(isAbsolute(source) ? source : resolve(process.cwd(), source), {
-  readonly: true,
+const sqlite = new DatabaseSync(isAbsolute(source) ? source : resolve(process.cwd(), source), {
+  readOnly: true,
 })
 const sql = postgres(target)
 
 const order = [
   'images', 'site_settings', 'home', 'about', 'contact', 'artists', 'releases',
-  'release_artists', 'services', 'about_photos', 'blackouts', 'admin_users',
-  'sessions', 'login_attempts', 'store_page', 'events_page', 'products', 'events',
-  'bookings', 'orders', 'order_items',
+  'release_artists', 'services', 'about_photos', 'blackouts', 'store_page',
+  'events_page', 'products', 'events', 'bookings', 'orders', 'order_items',
 ]
 const json = new Set(['social_links', 'emails', 'links', 'tracklist', 'streaming_links', 'variants'])
 const booleans = new Set(['is_placeholder', 'show_catalog_count', 'featured', 'notified', 'digital', 'must_change_password', 'ok'])
