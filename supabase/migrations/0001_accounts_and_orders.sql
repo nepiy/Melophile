@@ -73,6 +73,10 @@ $$;
 -- knowing: the unique username, the account status, the admin's notes.
 -- ===========================================================================
 
+-- `username` uses citext below, so the extension must exist before the table
+-- is parsed (not afterwards).
+create extension if not exists citext;
+
 create table if not exists public.users (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
@@ -91,9 +95,6 @@ create table if not exists public.users (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
--- citext needs the extension; fall back to a lower() index if it is unavailable.
-create extension if not exists citext;
 
 create unique index if not exists users_username_key on public.users (username) where username is not null;
 create unique index if not exists users_email_key on public.users (lower(email));
