@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { getSiteSettings } from '@/lib/data'
 import { fontClassNames } from './fonts'
 
+// Railway private networking is available after the service starts, not while
+// its build image is created. Keep data-backed routes request-rendered.
+export const dynamic = 'force-dynamic'
+
 /* The root layout is deliberately bare: html, body, fonts, global stylesheets.
 
    The public nav and footer live in app/(site)/layout.tsx instead, because
