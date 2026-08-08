@@ -131,7 +131,7 @@ export async function changePassword(
   _previous: PasswordState,
   formData: FormData,
 ): Promise<PasswordState> {
-  const { user } = await requireAdmin()
+  const { user } = await requireAdmin({ allowPasswordChange: true })
 
   const current = String(formData.get('currentPassword') ?? '')
   const next = String(formData.get('newPassword') ?? '')

@@ -420,6 +420,11 @@ create policy users_update_own on public.users
     and auth_method = (select u.auth_method from public.users u where u.id = auth.uid())
   );
 
+-- RLS chooses rows; column privileges choose fields. A browser may change its
+-- username, but mirrored verification/status/audit fields remain server-owned.
+revoke update on table public.users from authenticated;
+grant update (username) on table public.users to authenticated;
+
 -- profiles ------------------------------------------------------------------
 drop policy if exists profiles_select_own on public.profiles;
 create policy profiles_select_own on public.profiles
@@ -467,21 +472,23 @@ create policy activity_select_own on public.account_activity
 -- ===========================================================================
 -- STORAGE — profile pictures
 --
--- Public bucket so avatars can be served straight from the CDN, but writes are
--- locked to a folder named after the user's own id. A signed-in customer can
--- replace their own avatar and nobody else's.
+-- Private bucket. Reads and writes are locked to a folder named after the
+-- user's own id; the application renders short-lived signed URLs.
 -- ===========================================================================
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('avatars', 'avatars', true, 4194304, array['image/jpeg','image/png','image/webp','image/avif'])
+values ('avatars', 'avatars', false, 4194304, array['image/jpeg','image/png','image/webp','image/avif'])
 on conflict (id) do update
   set public = excluded.public,
       file_size_limit = excluded.file_size_limit,
       allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists avatars_read on storage.objects;
-create policy avatars_read on storage.objects
-  for select using (bucket_id = 'avatars');
+drop policy if exists avatars_select_own on storage.objects;
+create policy avatars_select_own on storage.objects
+  for select using (
+    bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 drop policy if exists avatars_insert_own on storage.objects;
 create policy avatars_insert_own on storage.objects

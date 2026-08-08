@@ -1,11 +1,11 @@
 'use server'
 
 import { eq, sql } from 'drizzle-orm'
-import { headers } from 'next/headers'
 import { db, events, orderItems, orders, products } from '@/db'
 import { priceCart, type CartLine, type PricedCart, type PricedLine } from '@/lib/cart'
 import { orderReference } from '@/lib/format'
 import { notifyOrder } from '@/lib/mail'
+import { assertOrderAccessConfigured, orderAccessToken } from '@/lib/order-access'
 import {
   attachPayment,
   createOrder,
@@ -62,6 +62,8 @@ export type CheckoutState = {
   redirectUrl?: string
   /** Present once the order exists, paid or not. */
   reference?: string
+  /** Bearer token for the private guest confirmation page. */
+  accessToken?: string
   /** Present when the order was taken but no payment was collected. */
   unpaidNotice?: string
 }
@@ -96,6 +98,34 @@ export async function submitCheckout(
   }
   if (cart.issues.length > 0) return { cartIssues: cart.issues }
 
+  // The short reference is for people to quote, not a password. Refuse the
+  // checkout before writing anything if a private confirmation link cannot be
+  // derived for it.
+  try {
+    assertOrderAccessConfigured()
+  } catch {
+    return {
+      formError:
+        'Checkout is temporarily unavailable. Nothing has been recorded or charged — try again in a moment.',
+    }
+  }
+
+  // Never derive a Stripe return URL from Host/X-Forwarded-Host. Those headers
+  // are attacker input on a misconfigured proxy, and the success URL now carries
+  // the guest's order credential. Validate the deployment origin before writing
+  // an order whenever a real payment redirect will be created.
+  let paymentOrigin = 'http://localhost:3000'
+  if (needsPayment(cart) && stripeConfigured()) {
+    try {
+      paymentOrigin = siteOrigin()
+    } catch {
+      return {
+        formError:
+          'Checkout is temporarily unavailable. Nothing has been recorded or charged — try again in a moment.',
+      }
+    }
+  }
+
   const ip = await clientIp()
   if (!checkBookingRate(ip).allowed) {
     return {
@@ -105,10 +135,13 @@ export async function submitCheckout(
   }
 
   /* ---- the one branch ---- */
-  if (serviceRoleAvailable()) return postgresCheckout(cart, customer, ip)
+  if (serviceRoleAvailable()) {
+    return postgresCheckout(cart, customer, ip, paymentOrigin)
+  }
 
   /* ---- write it down, all or nothing ---- */
   const reference = orderReference()
+  const accessToken = orderAccessToken(reference)
   const now = new Date()
 
   let orderId: number
@@ -195,16 +228,15 @@ export async function submitCheckout(
       .update(orders)
       .set({ status: 'paid', paidAt: new Date(), updatedAt: new Date() })
       .where(eq(orders.id, orderId))
-    return { reference }
+    return { reference, accessToken }
   }
 
-  const origin = await siteOrigin()
   const session = await createCheckoutSession({
     cart,
     reference,
     email: customer.email,
-    successUrl: `${origin}/order/${reference}?session={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${origin}/cart?cancelled=1`,
+    successUrl: `${paymentOrigin}/order/${reference}?access=${encodeURIComponent(accessToken)}&session={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${paymentOrigin}/cart?cancelled=1`,
   })
 
   if (session.ok) {
@@ -212,12 +244,13 @@ export async function submitCheckout(
       .update(orders)
       .set({ stripeSessionId: session.sessionId, updatedAt: new Date() })
       .where(eq(orders.id, orderId))
-    return { redirectUrl: session.url, reference }
+    return { redirectUrl: session.url, reference, accessToken }
   }
 
   // Stripe unconfigured or unreachable. The order stands; say so honestly.
   return {
     reference,
+    accessToken,
     unpaidNotice: `Your order is recorded as ${reference}. ${session.error}`,
   }
 }
@@ -233,6 +266,7 @@ async function postgresCheckout(
   cart: PricedCart,
   customer: CheckoutInput,
   ip: string,
+  paymentOrigin: string,
 ): Promise<CheckoutState> {
   /* Signed in, or a guest. GUEST CHECKOUT MUST KEEP WORKING: getCurrentUser()
      returns null when nobody is signed in and when accounts are switched off,
@@ -261,7 +295,7 @@ async function postgresCheckout(
     }
   }
 
-  const { reference, id } = written
+  const { reference, id, accessToken } = written
 
   /* ---- stock ----
      The catalogue is still SQLite, so this is still a SQLite write and it still
@@ -331,16 +365,15 @@ async function postgresCheckout(
   /* ---- payment ---- */
   if (!needsPayment(cart)) {
     await markPaid(reference, { transactionId: '', provider: 'none' })
-    return { reference }
+    return { reference, accessToken }
   }
 
-  const origin = await siteOrigin()
   const session = await createCheckoutSession({
     cart,
     reference,
     email: customer.email,
-    successUrl: `${origin}/order/${reference}?session={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${origin}/cart?cancelled=1`,
+    successUrl: `${paymentOrigin}/order/${reference}?access=${encodeURIComponent(accessToken)}&session={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${paymentOrigin}/cart?cancelled=1`,
   })
 
   if (session.ok) {
@@ -354,12 +387,13 @@ async function postgresCheckout(
       currency: cart.currency,
       status: 'pending',
     })
-    return { redirectUrl: session.url, reference }
+    return { redirectUrl: session.url, reference, accessToken }
   }
 
   // Stripe unconfigured or unreachable. The order stands; say so honestly.
   return {
     reference,
+    accessToken,
     unpaidNotice: `Your order is recorded as ${reference}. ${session.error}`,
   }
 }
@@ -388,12 +422,27 @@ function holdStock(tx: CatalogueTx, line: PricedLine): void {
   }
 }
 
-/** Absolute origin for Stripe's return URLs. Falls back to the configured site. */
-async function siteOrigin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '')
-  if (configured) return configured
-  const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
-  const proto = h.get('x-forwarded-proto') ?? 'http'
-  return `${proto}://${host}`
+/** Trusted absolute origin for payment return URLs; never derived from a request. */
+function siteOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (!configured) throw new Error('NEXT_PUBLIC_SITE_URL is required for payments.')
+
+  const url = new URL(configured)
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+  const safeProtocol =
+    url.protocol === 'https:' ||
+    (process.env.NODE_ENV !== 'production' && local && url.protocol === 'http:')
+
+  if (
+    !safeProtocol ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    (url.pathname !== '/' && url.pathname !== '')
+  ) {
+    throw new Error('NEXT_PUBLIC_SITE_URL must be an HTTPS origin without a path.')
+  }
+
+  return url.origin
 }

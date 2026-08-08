@@ -22,7 +22,9 @@ async function createInitialAdmin(): Promise<void> {
   const password = process.env.ADMIN_PASSWORD ?? ''
 
   if (!email || !password) {
-    console.warn('No admin user created: set ADMIN_EMAIL and ADMIN_PASSWORD to enable /admin.')
+    console.warn(
+      'No admin user created: set ADMIN_EMAIL and ADMIN_PASSWORD to enable /admin.',
+    )
     return
   }
 
@@ -37,7 +39,7 @@ async function createInitialAdmin(): Promise<void> {
     email,
     passwordHash: hash,
     passwordSalt: salt,
-    mustChangePassword: false,
+    mustChangePassword: true,
     createdAt: new Date(),
   })
   console.log(`Initial admin created for ${email}`)

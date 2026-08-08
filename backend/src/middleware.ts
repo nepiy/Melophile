@@ -52,6 +52,27 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (user) {
+    const { data: account, error } = await supabase
+      .from('users')
+      .select('status')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    // A valid Supabase token is not enough: suspended, banned, deleted, and
+    // incomplete account rows must not retain access through an old session.
+    if (error || account?.status !== 'active') {
+      await supabase.auth.signOut()
+      const login = request.nextUrl.clone()
+      login.pathname = '/login'
+      login.search = ''
+      login.searchParams.set('error', 'blocked')
+      const denied = NextResponse.redirect(login)
+      for (const cookie of response.cookies.getAll()) denied.cookies.set(cookie)
+      return denied
+    }
+  }
+
   const path = request.nextUrl.pathname
 
   if (!user && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) {

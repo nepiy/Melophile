@@ -15,7 +15,7 @@ const noStore = { 'Cache-Control': 'no-store' }
 
 export async function POST(request: Request) {
   const session = await getSession()
-  if (!session) {
+  if (!session || session.user.mustChangePassword) {
     return NextResponse.json(
       { ok: false, error: 'Sign in first.' },
       { status: 401, headers: noStore },

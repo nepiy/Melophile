@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { PricedCart } from '@/lib/cart'
 import { orderReference } from '@/lib/format'
+import { orderAccessToken } from '@/lib/order-access'
 import { logActivity } from '@/lib/account/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { serviceRoleAvailable } from '@/lib/supabase/config'
@@ -67,7 +68,8 @@ export type CreateOrderInput = {
 }
 
 export type CreateOrderResult =
-  { ok: true; reference: string; id: string } | { ok: false; error: string }
+  | { ok: true; reference: string; id: string; accessToken: string }
+  | { ok: false; error: string }
 
 export type Ack = { ok: true } | { ok: false; error: string }
 
@@ -194,7 +196,12 @@ export async function createOrder({
       )
     }
 
-    return { ok: true, reference: header.reference, id: header.id }
+    return {
+      ok: true,
+      reference: header.reference,
+      id: header.id,
+      accessToken: orderAccessToken(header.reference),
+    }
   } catch (error) {
     return { ok: false, error: reason(error, 'The order could not be written.') }
   }

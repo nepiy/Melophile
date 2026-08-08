@@ -56,6 +56,16 @@ const config: NextConfig = {
         ],
       },
       {
+        // Guest order pages carry a high-entropy bearer token in the query.
+        // Never cache it or send its URL as a referrer to another resource.
+        source: '/order/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },

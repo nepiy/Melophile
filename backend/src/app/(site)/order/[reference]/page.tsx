@@ -12,9 +12,12 @@ import {
   markPaid,
   orderStatusWord,
 } from '@/lib/orders/store'
+import { verifyOrderAccessToken } from '@/lib/order-access'
 import { verifySessionPaid } from '@/lib/payments'
+import { getSession } from '@/lib/session'
 import { getStorePage } from '@/lib/store-data'
 import { serviceRoleAvailable } from '@/lib/supabase/config'
+import { getCurrentUser } from '@/lib/supabase/server'
 
 import '@/styles/cart.css'
 
@@ -40,14 +43,19 @@ import '@/styles/cart.css'
    force-dynamic because an order page that is cached is an order page that
    can be served to the wrong person, or that shows a stale status.
 
+   ACCESS TO THE PAGE
+   The reference is designed to be spoken over the phone and has far too little
+   entropy to be an access credential. A guest therefore needs the HMAC bearer
+   token issued at checkout. A signed-in owner and the admin may enter without
+   that token. Every refusal is a 404, so guessing reveals nothing.
+
    WHERE THE ORDER IS READ FROM
    Postgres when it is configured, SQLite otherwise — the same branch checkout
    makes when it writes. Both loaders return the same small view below, so the
    two rules above are implemented once and cannot come apart. This page is
    read with the SERVICE ROLE on the Postgres path, because the buyer may be a
-   guest with no session at all; that is why nothing here depends on who is
-   looking, and why the reference alone still reveals only what the buyer
-   already had in their hand.
+   guest with no session at all. That makes the authorization check above the
+   boundary that must run before any personal data is returned.
    ========================================================================== */
 
 export const dynamic = 'force-dynamic'
@@ -104,10 +112,13 @@ export default async function OrderPage({
   ])
 
   const returned = typeof query.session === 'string' ? query.session : ''
+  const access = typeof query.access === 'string' ? query.access : ''
+
+  if (!/^[A-Za-z0-9][A-Za-z0-9-]{1,31}$/.test(reference)) notFound()
 
   const view = serviceRoleAvailable()
-    ? await fromPostgres(reference, returned)
-    : await fromSqlite(reference, returned, page.currencySymbol)
+    ? await fromPostgres(reference, returned, access)
+    : await fromSqlite(reference, returned, access, page.currencySymbol)
 
   if (!view) notFound()
 
@@ -278,10 +289,12 @@ export default async function OrderPage({
 async function fromSqlite(
   reference: string,
   returned: string,
+  access: string,
   symbol: string,
 ): Promise<View | null> {
   let order = await db.select().from(orders).where(eq(orders.reference, reference)).get()
   if (!order) return null
+  if (!(await mayReadOrder(reference, access))) return null
 
   /* ---- rule 1: verify, never assume ---- */
 
@@ -334,10 +347,19 @@ async function fromSqlite(
 }
 
 /** Postgres — the same rules, against orders + order_items + payments. */
-async function fromPostgres(reference: string, returned: string): Promise<View | null> {
+async function fromPostgres(
+  reference: string,
+  returned: string,
+  access: string,
+): Promise<View | null> {
   const found = await getOrderByReference(reference)
   if (!found.ok) return null
   let order = found.order
+
+  if (!verifyOrderAccessToken(reference, access)) {
+    const [admin, user] = await Promise.all([callerIsAdmin(), getCurrentUser()])
+    if (!admin && (!user || !order.user_id || order.user_id !== user.id)) return null
+  }
 
   /* ---- rule 1: verify, never assume ----
      The session id lives on the payments row written when the session was
@@ -394,6 +416,20 @@ async function fromPostgres(reference: string, returned: string): Promise<View |
     totalCents: order.total_amount,
     shippingLines: order.shipping_address,
     symbol: currencySymbol(order.currency),
+  }
+}
+
+/** SQLite orders have no customer identity, so only a bearer token or admin may read. */
+async function mayReadOrder(reference: string, access: string): Promise<boolean> {
+  return verifyOrderAccessToken(reference, access) || callerIsAdmin()
+}
+
+async function callerIsAdmin(): Promise<boolean> {
+  try {
+    const session = await getSession()
+    return Boolean(session && !session.user.mustChangePassword)
+  } catch {
+    return false
   }
 }
 

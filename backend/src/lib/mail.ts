@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { formatDateLong, formatMoney, formatTime, sessionTypeLabel } from './format'
 import type { BookingRow, OrderItemRow, OrderRow } from '@/db'
@@ -17,6 +17,20 @@ import type { BookingRow, OrderItemRow, OrderRow } from '@/db'
    ========================================================================== */
 
 export type NotifyResult = { ok: true } | { ok: false; error: string }
+
+async function secureOutbox(): Promise<string> {
+  const dir = resolve(process.cwd(), 'data', 'outbox')
+  await mkdir(dir, { recursive: true, mode: 0o700 })
+  // mkdir does not tighten an existing directory. Notification files contain
+  // names, addresses and order/booking detail, so make the owner boundary
+  // explicit on every write rather than depending on the process umask.
+  await chmod(dir, 0o700)
+  return dir
+}
+
+async function writePrivateText(file: string, content: string): Promise<void> {
+  await writeFile(file, content, { encoding: 'utf8', mode: 0o600, flag: 'wx' })
+}
 
 function bookingSubject(b: BookingRow): string {
   return `Studio request — ${b.name}, ${formatDateLong(b.date)} ${formatTime(b.time)}`
@@ -53,11 +67,10 @@ async function writeToOutbox(
   subject: string,
   body: string,
 ): Promise<void> {
-  const dir = resolve(process.cwd(), 'data', 'outbox')
-  await mkdir(dir, { recursive: true })
+  const dir = await secureOutbox()
   const stamp = b.createdAt.toISOString().replace(/[:.]/g, '-')
   const file = join(dir, `booking-${String(b.id).padStart(4, '0')}-${stamp}.txt`)
-  await writeFile(file, `Subject: ${subject}\n\n${body}\n`, 'utf8')
+  await writePrivateText(file, `Subject: ${subject}\n\n${body}\n`)
 }
 
 /* ------------------------------------------------------------------ *
@@ -74,13 +87,11 @@ async function sendOrOutbox(
   const from = process.env.BOOKING_NOTIFY_FROM?.trim()
 
   const outbox = async () => {
-    const dir = resolve(process.cwd(), 'data', 'outbox')
-    await mkdir(dir, { recursive: true })
+    const dir = await secureOutbox()
     const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-    await writeFile(
+    await writePrivateText(
       join(dir, `${opts.filename}-${stamp}.txt`),
       `Subject: ${subject}\n\n${body}\n`,
-      'utf8',
     )
   }
 

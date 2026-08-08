@@ -1,6 +1,5 @@
 import 'server-only'
 
-import { avatarUrl } from '@/lib/account/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { accountsSetupHint, serviceRoleAvailable } from '@/lib/supabase/config'
 import type {
@@ -132,7 +131,7 @@ function failure<T>(error: unknown, fallback: string): Read<T> {
 export type AdminUser = UserRow & {
   /** From the profile row, which the admin never shows on its own. */
   fullName: string
-  /** Ready to render, or null. The avatars bucket is public; writes are not. */
+  /** Short-lived signed URL for the private avatars bucket, or null. */
   avatarUrl: string | null
 }
 
@@ -174,6 +173,31 @@ async function profilesFor(
     })
   }
   return found
+}
+
+/** Resolve local object paths in one signed request; external OAuth pictures stay HTTPS. */
+async function signedAvatarUrls(
+  admin: ReturnType<typeof createAdminClient>,
+  paths: Array<string | null | undefined>,
+): Promise<Map<string, string>> {
+  const urls = new Map<string, string>()
+  const local = [
+    ...new Set(paths.filter((path): path is string => Boolean(path))),
+  ].filter((path) => {
+    if (path.startsWith('https://')) {
+      urls.set(path, path)
+      return false
+    }
+    return !path.startsWith('http://')
+  })
+
+  if (local.length === 0) return urls
+
+  const { data } = await admin.storage.from('avatars').createSignedUrls(local, 60 * 60)
+  for (const item of data ?? []) {
+    if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl)
+  }
+  return urls
 }
 
 /**
@@ -271,13 +295,17 @@ export async function listUsers(options: {
       admin,
       shown.map((row) => row.id),
     )
+    const avatars = await signedAvatarUrls(
+      admin,
+      shown.map((row) => profiles.get(row.id)?.profile_picture),
+    )
 
     const users: AdminUser[] = shown.map((row) => {
       const profile = profiles.get(row.id)
       return {
         ...row,
         fullName: profile?.full_name ?? '',
-        avatarUrl: avatarUrl(profile?.profile_picture),
+        avatarUrl: avatars.get(profile?.profile_picture ?? '') ?? null,
       }
     })
 
@@ -415,13 +443,14 @@ export async function getUserDetail(id: string): Promise<Read<UserDetail | null>
       : { data: [] }
 
     const items = countItems(itemRows ?? [])
+    const avatars = await signedAvatarUrls(admin, [profile.data?.profile_picture])
 
     return {
       ok: true,
       value: {
         user,
         profile: profile.data ?? null,
-        avatarUrl: avatarUrl(profile.data?.profile_picture),
+        avatarUrl: avatars.get(profile.data?.profile_picture ?? '') ?? null,
         addresses: addresses.data ?? [],
         orders: orderRows.map((row) => ({
           ...row,

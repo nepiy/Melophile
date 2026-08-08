@@ -7,7 +7,7 @@ import { logActivity, usernameAvailable } from '@/lib/account/queries'
 import { clientIp } from '@/lib/ratelimit'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { accountsEnabled, serviceRoleAvailable } from '@/lib/supabase/config'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createServerSupabase, getCurrentUser } from '@/lib/supabase/server'
 import {
   addressSchema,
   deleteAccountSchema,
@@ -52,9 +52,7 @@ async function requestContext() {
 
 async function requireUser() {
   const supabase = await createServerSupabase()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   return { supabase, user }
 }
 

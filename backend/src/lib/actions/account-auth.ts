@@ -43,6 +43,20 @@ export type AuthState = {
 const NOT_CONFIGURED =
   'Customer accounts are not switched on yet. Nothing was submitted — try again once the site owner has finished setting them up.'
 
+const BLOCKED = 'This account is not active. Email us if you think that is wrong.'
+
+async function accountIsActive(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('status')
+    .eq('id', userId)
+    .maybeSingle()
+  return !error && data?.status === 'active'
+}
+
 /* ---- attempt limiting, per IP, in memory --------------------------------
    Supabase applies its own limits server-side; this stops a script reaching
    them from this origin in the first place, and it is deliberately generous
@@ -180,11 +194,11 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   // Suspended and banned accounts authenticate fine — the block is ours, not
   // Supabase's — so it has to be enforced here, after the token exists.
   const row = await recordLogin(data.user.id)
-  if (row && row.status !== 'active') {
+  if (!row || row.status !== 'active') {
     await supabase.auth.signOut()
     return {
       formError:
-        row.status === 'banned'
+        row?.status === 'banned'
           ? 'This account has been closed. Email us if you think that is wrong.'
           : 'This account is suspended. Email us and we will look into it.',
     }
@@ -286,6 +300,11 @@ export async function resetPassword(
     }
   }
 
+  if (!(await accountIsActive(supabase, user.id))) {
+    await supabase.auth.signOut()
+    return { formError: BLOCKED }
+  }
+
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
   if (error) return { formError: error.message }
 
@@ -311,6 +330,10 @@ export async function changePassword(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user?.email) return { formError: 'You are not signed in.' }
+  if (!(await accountIsActive(supabase, user.id))) {
+    await supabase.auth.signOut()
+    return { formError: BLOCKED }
+  }
 
   // Re-authenticate. Without this, anyone who sat down at an unlocked laptop
   // could change the password and take the account.

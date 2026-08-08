@@ -1,7 +1,10 @@
 {
   "name": "melophile-records",
   "private": true,
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "dev": "npm run dev --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
@@ -9,5 +12,15 @@
     "build": "npm run build --workspace frontend && npm run build --workspace backend",
     "typecheck": "npm run typecheck --workspace frontend && npm run typecheck --workspace backend"
   },
-  "engines": { "node": "22.x" }
+  "overrides": {
+    "postcss": "^8.5.23",
+    "nanoid": "^3.3.17",
+    "sharp": "^0.35.3",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    }
+  },
+  "engines": {
+    "node": "22.x"
+  }
 }

@@ -9,7 +9,7 @@ import { GoogleConnect } from '@/components/account/GoogleConnect'
 import { ProfileForm, type ProfileFormValues } from '@/components/account/ProfileForm'
 import { signOut } from '@/lib/actions/account-auth'
 import { createClient } from '@/lib/supabase/client'
-import { SUPABASE_URL, accountsEnabled } from '@/lib/supabase/config'
+import { accountsEnabled } from '@/lib/supabase/config'
 import type { AddressRow } from '@/lib/supabase/types'
 
 /* ==========================================================================
@@ -54,21 +54,6 @@ type AccountDetails = {
   authMethod: 'email' | 'google'
   profile: ProfileFormValues
   addresses: AddressRow[]
-}
-
-/**
- * Public URL for an avatar object path.
- *
- * Deliberately a copy of avatarUrl() in @/lib/account/queries — that module is
- * `server-only` and importing it here would break the client build. The bucket
- * is public, so the shape of the URL is not a secret; it is nine characters of
- * duplication against a module boundary that exists for a good reason.
- */
-function publicAvatarUrl(path: string | null | undefined): string | null {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  if (!SUPABASE_URL) return null
-  return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`
 }
 
 /** Up to two letters. A name, then a handle, then the one thing we always have. */
@@ -159,7 +144,7 @@ export function AccountMenu() {
         await Promise.all([
           supabase
             .from('users')
-            .select('username, email, auth_method')
+            .select('username, email, auth_method, status')
             .eq('id', userId)
             .maybeSingle(),
           supabase
@@ -182,10 +167,17 @@ export function AccountMenu() {
             .maybeSingle(),
         ])
 
-      if (!live) return
-
       const user = basicUser.data
       const profile = basicProfile.data
+      if (!user || user.status !== 'active') {
+        await supabase.auth.signOut()
+        if (live) {
+          setAccount(null)
+          setDetails(null)
+        }
+        return
+      }
+
       const username = user?.username ?? null
       const safeProfile = profile ?? {
         full_name: '',
@@ -198,11 +190,25 @@ export function AccountMenu() {
         marketing_opt_in: false,
       }
       const email = user?.email ?? authEmail
+
+      let avatarUrl: string | null = null
+      const avatarPath = safeProfile.profile_picture
+      if (avatarPath.startsWith('https://')) {
+        avatarUrl = avatarPath
+      } else if (avatarPath && !avatarPath.startsWith('http://')) {
+        const { data } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(avatarPath, 60 * 60)
+        avatarUrl = data?.signedUrl ?? null
+      }
+
+      if (!live) return
+
       setAccount({
         displayName:
           safeProfile.full_name || (username ? `@${username}` : email || 'Account'),
         username,
-        avatarUrl: publicAvatarUrl(safeProfile.profile_picture),
+        avatarUrl,
       })
       setDetails({
         email,

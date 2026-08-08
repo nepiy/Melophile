@@ -149,7 +149,10 @@ export function CheckoutForm({
       done.current = true
       writeCart([])
       setLeaving(true)
-      router.push(`/order/${state.reference}`)
+      const access = state.accessToken
+        ? `?access=${encodeURIComponent(state.accessToken)}`
+        : ''
+      router.push(`/order/${state.reference}${access}`)
     }
   }, [state, router])
 

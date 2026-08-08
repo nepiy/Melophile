@@ -16,6 +16,7 @@ public/uploads/*
 .env
 .env.local
 .env*.local
+.dev.vars*
 .DS_Store
 
 # Local instructions for Codex/agents. Keep this on each developer's machine,

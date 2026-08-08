@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { bookings, db } from '@/db'
 import { eq } from 'drizzle-orm'
 import { createServerSupabase, getCurrentUser } from '@/lib/supabase/server'
-import { accountsEnabled, SUPABASE_URL } from '@/lib/supabase/config'
+import { accountsEnabled } from '@/lib/supabase/config'
 import type {
   ActivityRow,
   ActivityType,
@@ -32,14 +32,6 @@ export type Account = {
   avatarUrl: string | null
 }
 
-/** Public URL for an avatar object path. The bucket is public; writes are not. */
-export function avatarUrl(path: string | null | undefined): string | null {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  if (!SUPABASE_URL) return null
-  return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`
-}
-
 /** The signed-in customer's account, or null. Never throws. */
 export async function getAccount(): Promise<Account | null> {
   if (!accountsEnabled()) return null
@@ -54,7 +46,7 @@ export async function getAccount(): Promise<Account | null> {
     supabase.from('profiles').select('*').eq('user_id', authUser.id).maybeSingle(),
   ])
 
-  if (!user) return null
+  if (!user || user.status !== 'active') return null
 
   // The trigger creates both rows, but a project restored from a partial backup
   // might not have one. Render something sane rather than a 500.
@@ -73,10 +65,21 @@ export async function getAccount(): Promise<Account | null> {
     updated_at: user.updated_at,
   }
 
+  let resolvedAvatar: string | null = null
+  const avatarPath = safeProfile.profile_picture
+  if (avatarPath.startsWith('https://')) {
+    resolvedAvatar = avatarPath
+  } else if (avatarPath && !avatarPath.startsWith('http://')) {
+    const { data } = await supabase.storage
+      .from('avatars')
+      .createSignedUrl(avatarPath, 60 * 60)
+    resolvedAvatar = data?.signedUrl ?? null
+  }
+
   return {
     user,
     profile: safeProfile,
-    avatarUrl: avatarUrl(safeProfile.profile_picture),
+    avatarUrl: resolvedAvatar,
   }
 }
 

@@ -101,8 +101,13 @@ export async function destroyAllSessionsFor(userId: number): Promise<void> {
 }
 
 /** Guard for every admin page and action. Redirects rather than throwing. */
-export async function requireAdmin(): Promise<AdminSession> {
+export async function requireAdmin(options?: {
+  allowPasswordChange?: boolean
+}): Promise<AdminSession> {
   const session = await getSession()
   if (!session) redirect('/admin/login')
+  if (session.user.mustChangePassword && !options?.allowPasswordChange) {
+    redirect('/admin/account')
+  }
   return session
 }

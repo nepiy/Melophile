@@ -34,7 +34,7 @@ function isoDay(date: Date): string {
 }
 
 export default async function AdminAccountPage() {
-  const { user } = await requireAdmin()
+  const { user } = await requireAdmin({ allowPasswordChange: true })
 
   return (
     <>

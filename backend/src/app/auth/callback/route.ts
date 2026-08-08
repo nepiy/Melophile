@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
      ours, not Supabase's — so it has to be enforced after the token exists,
      exactly as signIn() does. Without this, Google is a way around a ban. */
   const row = await recordLogin(user.id)
-  if (row && row.status !== 'active') {
+  if (!row || row.status !== 'active') {
     await supabase.auth.signOut()
     return NextResponse.redirect(new URL('/login?error=blocked', origin))
   }

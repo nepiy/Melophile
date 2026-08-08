@@ -41,5 +41,16 @@ export async function getCurrentUser() {
   const supabase = await createServerSupabase()
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) return null
+
+  // Supabase authentication and application authorization are separate. A
+  // suspended account can still hold a valid Auth token, so every server-side
+  // caller must also establish that the application account is active.
+  const { data: account, error: accountError } = await supabase
+    .from('users')
+    .select('status')
+    .eq('id', data.user.id)
+    .maybeSingle()
+  if (accountError || account?.status !== 'active') return null
+
   return data.user
 }

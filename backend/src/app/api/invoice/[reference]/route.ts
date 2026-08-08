@@ -135,7 +135,8 @@ function missing() {
  */
 async function callerIsAdmin(): Promise<boolean> {
   try {
-    return (await getSession()) !== null
+    const session = await getSession()
+    return Boolean(session && !session.user.mustChangePassword)
   } catch {
     return false
   }
