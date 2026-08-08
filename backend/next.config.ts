@@ -3,6 +3,14 @@ import type { NextConfig } from 'next'
 /** The port `npm run admin` serves the admin on. Keep in step with scripts/admin-server.mjs. */
 const ADMIN_PORT = process.env.ADMIN_PORT ?? '4100'
 
+/**
+ * The Vercel project forwards the public site to this Railway-hosted Next
+ * server. Server Actions deliberately compare Origin with the forwarded host;
+ * without this trusted public hostname, every admin form/login is rejected as
+ * a cross-site request before the action can run.
+ */
+const FRONTEND_HOST = process.env.FRONTEND_HOST ?? 'melophile-frontend-two.vercel.app'
+
 const config: NextConfig = {
   // The database adapter is intentionally compatibility-wrapped during the
   // SQLite-to-PostgreSQL query migration. Keep deployment builds unblocked
@@ -17,10 +25,14 @@ const config: NextConfig = {
     cpus: 1,
     // The admin is also reachable on its own port through scripts/admin-server.mjs.
     // Server actions compare Origin against Host to block cross-site posts, so
-    // that port has to be named here or every form on the admin silently fails
-    // to save while still looking like it worked.
+    // each legitimate front door has to be named here. This includes Vercel,
+    // which reverse-proxies requests to Railway in the current deployment.
     serverActions: {
-      allowedOrigins: [`localhost:${ADMIN_PORT}`, `127.0.0.1:${ADMIN_PORT}`],
+      allowedOrigins: [
+        `localhost:${ADMIN_PORT}`,
+        `127.0.0.1:${ADMIN_PORT}`,
+        FRONTEND_HOST.replace(/^https?:\/\//, '').replace(/\/$/, ''),
+      ],
     },
   },
 
