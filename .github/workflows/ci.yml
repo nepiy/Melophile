@@ -13,6 +13,25 @@ jobs:
   validate:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: melophile_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d melophile_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/melophile_ci
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      SESSION_SECRET: ci-only-session-secret-not-used-in-production
+
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -30,10 +49,10 @@ jobs:
         run: npm run typecheck
 
       - name: Content checks
-        run: npm run check
+        run: npm run check --workspace backend
 
       - name: Prepare database schema
-        run: npm run db:migrate
+        run: npm run db:migrate --workspace backend
 
       - name: Build
         run: npm run build

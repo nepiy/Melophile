@@ -268,7 +268,7 @@ export const getArtists = unstable_cache(
     })
 
     // Features. Derived, never a second stored copy of the catalogue.
-    const featureLinks = await db
+    const featureLinks: { releaseId: number; artistId: number }[] = await db
       .select({ releaseId: releaseArtists.releaseId, artistId: releaseArtists.artistId })
       .from(releaseArtists)
       .where(inArray(releaseArtists.artistId, ids))

@@ -406,7 +406,13 @@ async function postgresCheckout(
  * both paths at the same point in the flow — right after the order is written,
  * before payment — so the two can never drift apart.
  */
-type CatalogueTx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type CatalogueTx = {
+  update(table: unknown): {
+    set(values: unknown): {
+      where(condition: unknown): { run(): unknown }
+    }
+  }
+}
 
 function holdStock(tx: CatalogueTx, line: PricedLine): void {
   if (line.type === 'product') {

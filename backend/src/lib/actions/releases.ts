@@ -102,7 +102,7 @@ async function writeFeatures(releaseId: number, formData: FormData): Promise<voi
   await db.delete(releaseArtists).where(eq(releaseArtists.releaseId, releaseId))
   if (rows.length === 0) return
 
-  const known = await db
+  const known: { id: number; name: string }[] = await db
     .select({ id: artists.id, name: artists.name })
     .from(artists)
     .all()

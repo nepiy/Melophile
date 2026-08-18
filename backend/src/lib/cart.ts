@@ -1,5 +1,13 @@
 import { inArray } from 'drizzle-orm'
-import { db, events, products, type OrderItemKind } from '@/db'
+import {
+  db,
+  events,
+  products,
+  type EventRow,
+  type ImageRow,
+  type OrderItemKind,
+  type ProductRow,
+} from '@/db'
 import { normaliseLines, type CartLine } from './cart-types'
 import { getStorePage } from '@/lib/store-data'
 
@@ -57,6 +65,9 @@ export type PricedCart = {
   issues: string[]
 }
 
+type ProductWithImage = ProductRow & { image: ImageRow | null }
+type EventWithImage = EventRow & { image: ImageRow | null }
+
 /**
  * Turns ids into money, reading everything fresh.
  *
@@ -88,17 +99,17 @@ export async function priceCart(lines: CartLine[]): Promise<PricedCart> {
 
   const [productRows, eventRows] = await Promise.all([
     productIds.length
-      ? db.query.products.findMany({
+      ? (db.query.products.findMany({
           where: inArray(products.id, productIds),
           with: { image: true },
-        })
-      : Promise.resolve([]),
+        }) as Promise<ProductWithImage[]>)
+      : Promise.resolve<ProductWithImage[]>([]),
     eventIds.length
-      ? db.query.events.findMany({
+      ? (db.query.events.findMany({
           where: inArray(events.id, eventIds),
           with: { image: true },
-        })
-      : Promise.resolve([]),
+        }) as Promise<EventWithImage[]>)
+      : Promise.resolve<EventWithImage[]>([]),
   ])
 
   const productById = new Map(productRows.map((r) => [r.id, r]))

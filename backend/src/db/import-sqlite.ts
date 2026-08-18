@@ -13,21 +13,62 @@ import { DatabaseSync } from 'node:sqlite'
 
 const source = process.env.SQLITE_DATABASE_URL?.replace(/^file:/, '')
 const target = process.env.DATABASE_URL
-if (!source || !target) throw new Error('Set SQLITE_DATABASE_URL and DATABASE_URL before importing.')
+if (!source || !target)
+  throw new Error('Set SQLITE_DATABASE_URL and DATABASE_URL before importing.')
 
-const sqlite = new DatabaseSync(isAbsolute(source) ? source : resolve(process.cwd(), source), {
-  readOnly: true,
-})
+const sqlite = new DatabaseSync(
+  isAbsolute(source) ? source : resolve(process.cwd(), source),
+  {
+    readOnly: true,
+  },
+)
 const sql = postgres(target)
 
 const order = [
-  'images', 'site_settings', 'home', 'about', 'contact', 'artists', 'releases',
-  'release_artists', 'services', 'about_photos', 'blackouts', 'store_page',
-  'events_page', 'products', 'events', 'bookings', 'orders', 'order_items',
+  'images',
+  'site_settings',
+  'home',
+  'about',
+  'contact',
+  'artists',
+  'releases',
+  'release_artists',
+  'services',
+  'about_photos',
+  'blackouts',
+  'store_page',
+  'events_page',
+  'products',
+  'events',
+  'bookings',
+  'orders',
+  'order_items',
 ]
-const json = new Set(['social_links', 'emails', 'links', 'tracklist', 'streaming_links', 'variants'])
-const booleans = new Set(['is_placeholder', 'show_catalog_count', 'featured', 'notified', 'digital', 'must_change_password', 'ok'])
-const timestamps = new Set(['created_at', 'updated_at', 'last_login_at', 'expires_at', 'at', 'paid_at'])
+const json = new Set([
+  'social_links',
+  'emails',
+  'links',
+  'tracklist',
+  'streaming_links',
+  'variants',
+])
+const booleans = new Set([
+  'is_placeholder',
+  'show_catalog_count',
+  'featured',
+  'notified',
+  'digital',
+  'must_change_password',
+  'ok',
+])
+const timestamps = new Set([
+  'created_at',
+  'updated_at',
+  'last_login_at',
+  'expires_at',
+  'at',
+  'paid_at',
+])
 
 function value(column: string, raw: unknown) {
   if (raw === null) return null
@@ -40,11 +81,20 @@ function value(column: string, raw: unknown) {
 async function main() {
   for (const table of order) {
     const existing = await sql.unsafe(`select count(*)::int as count from "${table}"`)
-    if (existing[0].count > 0) throw new Error(`PostgreSQL table ${table} is not empty; refusing to overwrite data.`)
+    if ((existing[0]?.count ?? 0) > 0) {
+      throw new Error(
+        `PostgreSQL table ${table} is not empty; refusing to overwrite data.`,
+      )
+    }
 
-    const rows = sqlite.prepare(`select * from "${table}"`).all() as Record<string, unknown>[]
+    const rows = sqlite.prepare(`select * from "${table}"`).all() as Record<
+      string,
+      unknown
+    >[]
     if (!rows.length) continue
-    const columns = Object.keys(rows[0])
+    const firstRow = rows[0]
+    if (!firstRow) continue
+    const columns = Object.keys(firstRow)
     const names = columns.map((name) => `"${name}"`).join(', ')
     const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ')
     for (const row of rows) {
@@ -54,10 +104,15 @@ async function main() {
       )
     }
     if (columns.includes('id')) {
-      await sql.unsafe(`select setval(pg_get_serial_sequence('${table}', 'id'), (select max(id) from "${table}"))`)
+      await sql.unsafe(
+        `select setval(pg_get_serial_sequence('${table}', 'id'), (select max(id) from "${table}"))`,
+      )
     }
     console.log(`Imported ${rows.length} row(s) into ${table}.`)
   }
 }
 
-main().finally(async () => { sqlite.close(); await sql.end() })
+main().finally(async () => {
+  sqlite.close()
+  await sql.end()
+})
