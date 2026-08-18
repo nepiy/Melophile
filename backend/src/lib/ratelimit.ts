@@ -1,12 +1,13 @@
-import { and, eq, gte } from 'drizzle-orm'
+import { and, eq, gte, lt } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { db, loginAttempts } from '@/db'
 
 /* ==========================================================================
    Two limiters, because the two jobs are different.
 
-   Login: durable, per ip+email, backed by the login_attempts table so a
-   restart does not clear a lockout in progress.
+   Login: durable, per account AND per IP, backed by the login_attempts table
+   so a restart does not clear a lockout in progress. The IP-wide ceiling stops
+   account spraying from buying unlimited scrypt work with fresh email values.
 
    Booking: in-memory per IP. Losing this on restart is fine — it exists to
    stop a script hammering the form, not to enforce a quota.
@@ -26,30 +27,49 @@ export async function clientIp(): Promise<string> {
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000
 const LOGIN_MAX_FAILURES = 5
+const LOGIN_MAX_IP_FAILURES = 25
 
 export type LoginGate =
   { allowed: true; remaining: number } | { allowed: false; retryAfterSeconds: number }
 
-function loginKey(ip: string, email: string): string {
-  return `${ip}:${email.trim().toLowerCase()}`
+function loginKey(email: string): string {
+  return `account:${email.trim().toLowerCase()}`
 }
 
-export async function checkLoginRate(ip: string, email: string): Promise<LoginGate> {
-  const key = loginKey(ip, email)
-  const since = new Date(Date.now() - LOGIN_WINDOW_MS)
+function loginIpKey(ip: string): string {
+  return `ip:${ip}`
+}
 
+async function recentFailures(key: string, since: Date) {
   const recent = await db
     .select({ at: loginAttempts.at, ok: loginAttempts.ok })
     .from(loginAttempts)
     .where(and(eq(loginAttempts.key, key), gte(loginAttempts.at, since)))
     .all()
+  return recent.filter((row) => !row.ok)
+}
 
-  const failures = recent.filter((r) => !r.ok)
-  if (failures.length < LOGIN_MAX_FAILURES) {
-    return { allowed: true, remaining: LOGIN_MAX_FAILURES - failures.length }
+export async function checkLoginRate(ip: string, email: string): Promise<LoginGate> {
+  const since = new Date(Date.now() - LOGIN_WINDOW_MS)
+  const [accountFailures, ipFailures] = await Promise.all([
+    recentFailures(loginKey(email), since),
+    recentFailures(loginIpKey(ip), since),
+  ])
+
+  const accountBlocked = accountFailures.length >= LOGIN_MAX_FAILURES
+  const ipBlocked = ipFailures.length >= LOGIN_MAX_IP_FAILURES
+  if (!accountBlocked && !ipBlocked) {
+    return {
+      allowed: true,
+      remaining: Math.min(
+        LOGIN_MAX_FAILURES - accountFailures.length,
+        LOGIN_MAX_IP_FAILURES - ipFailures.length,
+      ),
+    }
   }
 
-  const oldest = failures.reduce(
+  const blockingFailures = accountBlocked ? accountFailures : ipFailures
+  const oldest = blockingFailures.reduce(
     (min, r) => (r.at.getTime() < min ? r.at.getTime() : min),
     Number.POSITIVE_INFINITY,
   )
@@ -65,12 +85,22 @@ export async function recordLoginAttempt(
   email: string,
   ok: boolean,
 ): Promise<void> {
-  await db.insert(loginAttempts).values({ key: loginKey(ip, email), at: new Date(), ok })
+  const now = new Date()
 
   // On success, clear the slate so a legitimate typo streak does not linger.
   if (ok) {
-    await db.delete(loginAttempts).where(eq(loginAttempts.key, loginKey(ip, email)))
+    await db.delete(loginAttempts).where(eq(loginAttempts.key, loginKey(email)))
+  } else {
+    await db.insert(loginAttempts).values([
+      { key: loginKey(email), at: now, ok: false },
+      { key: loginIpKey(ip), at: now, ok: false },
+    ])
   }
+
+  // A rotating list of guessed emails must not grow this table forever.
+  await db
+    .delete(loginAttempts)
+    .where(lt(loginAttempts.at, new Date(now.getTime() - LOGIN_WINDOW_MS)))
 }
 
 export function describeLockout(seconds: number): string {

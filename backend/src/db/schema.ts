@@ -357,12 +357,15 @@ export const loginAttempts = pgTable(
   'login_attempts',
   {
     id: serial('id').primaryKey(),
-    /** ip + ':' + lowercased email */
+    /** Independent `account:<email>` and `ip:<address>` failure dimensions. */
     key: text('key').notNull(),
     at: timestamp('at', { mode: 'date' }).notNull(),
     ok: boolean('ok').notNull(),
   },
-  (t) => [index('login_attempts_key_idx').on(t.key, t.at)],
+  (t) => [
+    index('login_attempts_key_idx').on(t.key, t.at),
+    index('login_attempts_at_idx').on(t.at),
+  ],
 )
 
 /* ------------------------------------------------------------------ *

@@ -193,9 +193,7 @@ export function AccountMenu() {
 
       let avatarUrl: string | null = null
       const avatarPath = safeProfile.profile_picture
-      if (avatarPath.startsWith('https://')) {
-        avatarUrl = avatarPath
-      } else if (avatarPath && !avatarPath.startsWith('http://')) {
+      if (avatarPath && avatarPath.startsWith(`${userId}/`)) {
         const { data } = await supabase.storage
           .from('avatars')
           .createSignedUrl(avatarPath, 60 * 60)

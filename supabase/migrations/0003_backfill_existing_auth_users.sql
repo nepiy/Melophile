@@ -40,7 +40,7 @@ insert into public.profiles (user_id, full_name, profile_picture)
 select
   au.id,
   coalesce(au.raw_user_meta_data ->> 'full_name', au.raw_user_meta_data ->> 'name', ''),
-  coalesce(au.raw_user_meta_data ->> 'avatar_url', '')
+  ''
 from auth.users au
 where exists (select 1 from public.users u where u.id = au.id)
 on conflict (user_id) do nothing;

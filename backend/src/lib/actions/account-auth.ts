@@ -57,24 +57,38 @@ async function accountIsActive(
   return !error && data?.status === 'active'
 }
 
-/* ---- attempt limiting, per IP, in memory --------------------------------
+/* ---- attempt limiting, per IP and account, in memory --------------------
    Supabase applies its own limits server-side; this stops a script reaching
    them from this origin in the first place, and it is deliberately generous
    so a person mistyping a password three times is unaffected. */
 
 const attempts = new Map<string, number[]>()
 
-function tooManyAttempts(key: string, max: number, windowMs: number): boolean {
+function recentAttempts(key: string, windowMs: number): number[] {
   const now = Date.now()
   const recent = (attempts.get(key) ?? []).filter((t) => now - t < windowMs)
-  recent.push(now)
   attempts.set(key, recent)
+  return recent
+}
+
+function attemptLimitReached(key: string, max: number, windowMs: number): boolean {
+  return recentAttempts(key, windowMs).length >= max
+}
+
+function recordAttempt(key: string, windowMs: number): void {
+  const now = Date.now()
+  attempts.set(key, [...recentAttempts(key, windowMs), now])
   if (attempts.size > 5000) {
     for (const [k, times] of attempts) {
       if (times.every((t) => now - t >= windowMs)) attempts.delete(k)
     }
   }
-  return recent.length > max
+}
+
+function takeAttempt(key: string, max: number, windowMs: number): boolean {
+  if (attemptLimitReached(key, max, windowMs)) return false
+  recordAttempt(key, windowMs)
+  return true
 }
 
 async function requestContext() {
@@ -101,7 +115,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   const { fullName, username, email, password } = parsed.data
   const ctx = await requestContext()
 
-  if (tooManyAttempts(`signup:${ctx.ip}`, 5, 60 * 60 * 1000)) {
+  if (!takeAttempt(`signup:${ctx.ip}`, 5, 60 * 60 * 1000)) {
     return { formError: 'That is a lot of sign-ups from here. Try again in an hour.' }
   }
 
@@ -169,7 +183,12 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const { email, password } = parsed.data
   const ctx = await requestContext()
 
-  if (tooManyAttempts(`signin:${ctx.ip}:${email}`, 8, 15 * 60 * 1000)) {
+  const windowMs = 15 * 60 * 1000
+  const ipKey = `signin-ip:${ctx.ip}`
+  const accountKey = `signin-account:${email}`
+  const ipBlocked = attemptLimitReached(ipKey, 30, windowMs)
+  const accountBlocked = attemptLimitReached(accountKey, 8, windowMs)
+  if (ipBlocked || accountBlocked) {
     return {
       formError: 'Too many attempts. Wait fifteen minutes, or reset your password.',
     }
@@ -179,6 +198,8 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error || !data.user) {
+    recordAttempt(ipKey, windowMs)
+    recordAttempt(accountKey, windowMs)
     if (/email not confirmed/i.test(error?.message ?? '')) {
       return {
         formError:
@@ -190,6 +211,8 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
       formError: 'That email and password do not match. Check both and try again.',
     }
   }
+
+  attempts.delete(accountKey)
 
   // Suspended and banned accounts authenticate fine — the block is ours, not
   // Supabase's — so it has to be enforced here, after the token exists.
@@ -257,7 +280,7 @@ export async function requestPasswordReset(
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) }
 
   const ctx = await requestContext()
-  if (tooManyAttempts(`reset:${ctx.ip}`, 5, 60 * 60 * 1000)) {
+  if (!takeAttempt(`reset:${ctx.ip}`, 5, 60 * 60 * 1000)) {
     return { formError: 'That is a lot of reset requests. Try again in an hour.' }
   }
 
@@ -368,7 +391,7 @@ export async function resendVerification(
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) }
 
   const ctx = await requestContext()
-  if (tooManyAttempts(`verify:${ctx.ip}`, 5, 60 * 60 * 1000)) {
+  if (!takeAttempt(`verify:${ctx.ip}`, 5, 60 * 60 * 1000)) {
     return { formError: 'That is a lot of requests. Try again in an hour.' }
   }
 

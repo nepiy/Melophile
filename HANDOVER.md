@@ -351,9 +351,12 @@ customer can ever reach it.
 
 ### One-time setup
 
-1. **Run the migration.** Supabase dashboard → **SQL Editor** → New query →
-   paste all of `supabase/migrations/0001_accounts_and_orders.sql` → Run.
-   It is safe to run twice.
+1. **Run the migrations.** For a new Supabase project, run every SQL file in
+   `supabase/migrations/` in filename order. For a project that already has the
+   account tables, apply only migrations it has not already received. The
+   dated `20260818051748_security_least_privilege.sql` migration removes broad
+   browser-role privileges, hardens trigger functions and restricts avatars to
+   owner-scoped private Storage paths.
 2. **Keys** go in `.env.local` at the project root (not in `src/`):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`. No spaces around the `=`.
@@ -397,6 +400,10 @@ reset and sign-up never reveal whether an address is registered. A suspended or
 banned account cannot sign in by password _or_ by Google. The activity trail is
 append-only — nobody can edit it, including the person it belongs to. Deleting
 an account keeps the orders as a financial record and removes the personal link.
+
+In Supabase → Authentication → Attack Protection, enable leaked-password
+protection for production. It rejects passwords known to have appeared in data
+breaches and is a dashboard setting rather than a database migration.
 
 ### If the keys are missing
 

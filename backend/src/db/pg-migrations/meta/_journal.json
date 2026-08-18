@@ -8,6 +8,13 @@
       "when": 1786154541219,
       "tag": "0000_adorable_vampiro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787031194695,
+      "tag": "0001_login_attempt_security",
+      "breakpoints": true
     }
   ]
 }

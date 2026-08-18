@@ -175,21 +175,23 @@ async function profilesFor(
   return found
 }
 
-/** Resolve local object paths in one signed request; external OAuth pictures stay HTTPS. */
+/** Resolve owner-scoped local object paths in one signed request. */
 async function signedAvatarUrls(
   admin: ReturnType<typeof createAdminClient>,
-  paths: Array<string | null | undefined>,
+  candidates: Array<{ ownerId: string; path: string | null | undefined }>,
 ): Promise<Map<string, string>> {
   const urls = new Map<string, string>()
   const local = [
-    ...new Set(paths.filter((path): path is string => Boolean(path))),
-  ].filter((path) => {
-    if (path.startsWith('https://')) {
-      urls.set(path, path)
-      return false
-    }
-    return !path.startsWith('http://')
-  })
+    ...new Set(
+      candidates.flatMap(({ ownerId, path }) =>
+        path &&
+        path.startsWith(`${ownerId}/`) &&
+        /^[0-9a-f-]{36}\/[A-Za-z0-9._-]+$/.test(path)
+          ? [path]
+          : [],
+      ),
+    ),
+  ]
 
   if (local.length === 0) return urls
 
@@ -297,7 +299,10 @@ export async function listUsers(options: {
     )
     const avatars = await signedAvatarUrls(
       admin,
-      shown.map((row) => profiles.get(row.id)?.profile_picture),
+      shown.map((row) => ({
+        ownerId: row.id,
+        path: profiles.get(row.id)?.profile_picture,
+      })),
     )
 
     const users: AdminUser[] = shown.map((row) => {
@@ -443,7 +448,9 @@ export async function getUserDetail(id: string): Promise<Read<UserDetail | null>
       : { data: [] }
 
     const items = countItems(itemRows ?? [])
-    const avatars = await signedAvatarUrls(admin, [profile.data?.profile_picture])
+    const avatars = await signedAvatarUrls(admin, [
+      { ownerId: id, path: profile.data?.profile_picture },
+    ])
 
     return {
       ok: true,

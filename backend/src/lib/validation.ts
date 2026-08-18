@@ -146,8 +146,16 @@ export function validateBookingField(
 /* -------------------------- admin form schemas -------------------------- */
 
 export const loginSchema = z.object({
-  email: z.string().trim().min(1, 'Enter the email you log in with.'),
-  password: z.string().min(1, 'Enter your password.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Enter the email you log in with.')
+    .max(160, 'That email address is too long.')
+    .regex(EMAIL_RE, 'Enter a valid email address.'),
+  password: z
+    .string()
+    .min(1, 'Enter your password.')
+    .max(1024, 'That password is too long.'),
 })
 
 const isoDate = z

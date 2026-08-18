@@ -67,9 +67,7 @@ export async function getAccount(): Promise<Account | null> {
 
   let resolvedAvatar: string | null = null
   const avatarPath = safeProfile.profile_picture
-  if (avatarPath.startsWith('https://')) {
-    resolvedAvatar = avatarPath
-  } else if (avatarPath && !avatarPath.startsWith('http://')) {
+  if (avatarPath && avatarPath.startsWith(`${authUser.id}/`)) {
     const { data } = await supabase.storage
       .from('avatars')
       .createSignedUrl(avatarPath, 60 * 60)

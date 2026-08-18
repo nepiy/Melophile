@@ -1,5 +1,6 @@
 'use server'
 
+import sharp from 'sharp'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -137,6 +138,8 @@ export async function saveProfile(
 /* -------------------------------- avatar -------------------------------- */
 
 const AVATAR_MAX_BYTES = 4 * 1024 * 1024
+const AVATAR_MAX_PIXELS = 40_000_000
+const AVATAR_MAX_DIMENSION = 1024
 const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
 
 export async function uploadAvatar(
@@ -167,14 +170,44 @@ export async function uploadAvatar(
     }
   }
 
+  let avatar: Buffer
+  try {
+    avatar = await sharp(Buffer.from(await file.arrayBuffer()), {
+      failOn: 'error',
+      limitInputPixels: AVATAR_MAX_PIXELS,
+      sequentialRead: true,
+    })
+      .rotate()
+      .resize({
+        width: AVATAR_MAX_DIMENSION,
+        height: AVATAR_MAX_DIMENSION,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 82, effort: 4 })
+      .toBuffer()
+  } catch {
+    return {
+      fieldErrors: {
+        avatar:
+          'That file is not a readable image or its dimensions are too large. Export it again and retry.',
+      },
+    }
+  }
+
   // The path starts with the user's id, which is exactly what the storage
   // policy checks — a customer can only ever write inside their own folder.
-  const extension = file.type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
-  const path = `${user.id}/avatar-${Date.now()}.${extension}`
+  // Decoding and re-encoding also strips active/polyglot content and metadata;
+  // Storage never receives bytes trusted only because of a browser MIME label.
+  const path = `${user.id}/avatar-${Date.now()}.webp`
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type })
+    .upload(path, avatar, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: 'image/webp',
+    })
 
   if (uploadError) return { fieldErrors: { avatar: uploadError.message } }
 
@@ -197,7 +230,7 @@ export async function uploadAvatar(
   // Only remove the old file once the row points at the new one, so a failure
   // never leaves a profile pointing at something that is gone.
   const previous = existing?.profile_picture
-  if (previous && !previous.startsWith('http')) {
+  if (previous?.startsWith(`${user.id}/`)) {
     await supabase.storage.from('avatars').remove([previous])
   }
 
@@ -220,7 +253,7 @@ export async function removeAvatar(): Promise<void> {
   await supabase.from('profiles').update({ profile_picture: '' }).eq('user_id', user.id)
 
   const path = data?.profile_picture
-  if (path && !path.startsWith('http')) {
+  if (path?.startsWith(`${user.id}/`)) {
     await supabase.storage.from('avatars').remove([path])
   }
 

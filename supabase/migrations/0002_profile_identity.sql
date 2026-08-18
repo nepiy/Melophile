@@ -9,6 +9,7 @@ create unique index if not exists users_public_id_key on public.users (public_id
 create or replace function public.assign_public_user_id()
 returns trigger
 language plpgsql
+set search_path = pg_catalog, public
 as $$
 declare
   candidate char(8);
